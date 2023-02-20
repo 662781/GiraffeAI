@@ -1,0 +1,20 @@
+This Python script uses the cvzone and mediapipe libraries to detect and track hand gestures in a live video stream. 
+The script calculates the distance between the user's hands and the camera, as well as the distance between the user's two hands.
+
+First, the necessary libraries are imported, and the webcam is set up for video capture. 
+The HandDetector object is created to detect hands in the video stream. 
+The object is set to detect with a confidence threshold of 0.8, and to track a maximum of two hands.
+
+Next, there is an array of x and y values that represent the raw data and corresponding centimeter values. 
+The numpy.polyfit function is used to fit a second-order polynomial to this data, which will be used to calculate the distance between the hands and the camera.
+
+Several helper functions are defined to calculate distances and set a bounding box for each hand in the video stream. 
+The calc_diagonal function calculates the diagonal distance between two points. The calc_distance_cam function calculates the distance between the camera and a hand, using the polynomial fit coefficients. 
+The calc_distance_hands function calculates the distance between the user's two hands. Finally, the set_bound_box function draws a bounding box around a hand and displays the calculated distance.
+
+The script then enters a loop to capture and process video frames. 
+The detector.findHands function is called to detect hands in the video stream. If a hand is detected, the script extracts several hand landmarks and information about the hand, such as its type and bounding box coordinates. 
+The calc_distance_cam function is called to calculate the distance between the camera and the hand, and the set_bound_box function is called to display the bounding box and the calculated distance.
+
+If two hands are detected, the calc_distance_hands function is called to calculate the distance between the hands, and the cvzone.putTextRect function is used to display this distance on the video stream. 
+Finally, the processed video frame is displayed in a window, and the script waits for a key press to exit.
