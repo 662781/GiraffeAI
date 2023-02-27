@@ -2,6 +2,13 @@
 $pythonVersion = "310"
 $pythonPath = "C:\Python$pythonVersion\python.exe"
 
+if (Test-Path $pythonPath) {
+    Write-Host "Path exists."
+} else {
+    Write-Host "Path does not exist."
+    $pythonPath = "py"
+}
+
 # Create the virtual environment
 & Set-Location .\src
 & $pythonPath -m venv venv
