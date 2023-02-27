@@ -5,7 +5,7 @@ $pythonPath = "C:\Python$pythonVersion\python.exe"
 if (Test-Path $pythonPath) {
     Write-Host "Path exists."
 } else {
-    Write-Host "Path does not exist."
+    Write-Host "Specified Python version is not installed on given path, trying to load default Python version."
     $pythonPath = "py"
 }
 
