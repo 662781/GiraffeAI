@@ -11,7 +11,7 @@ hands = mpHands.Hands()
 mpDraw = mp.solutions.drawing_utils
   
 #Houten plank
-wood = cv2.imread('resources/wood.png')
+wood = cv2.imread('scripts/resources/wood.png')
 size = 100
 wood = cv2.resize(wood, (60, 60), interpolation=cv2.INTER_LINEAR)
 img2gray = cv2.cvtColor(wood, cv2.COLOR_BGR2GRAY)
