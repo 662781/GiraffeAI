@@ -1,7 +1,7 @@
 import cv2
 import mediapipe as mp
 
-# Functions
+# Methods
 
 def does_push_up(results):
      # Check if the person is doing a push-up
