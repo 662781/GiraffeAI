@@ -43,6 +43,9 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
         annotated_image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         mp_drawing.draw_landmarks(annotated_image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
         
+        # Flip the annotated image
+        annotated_image = cv2.flip(annotated_image, 1)
+        
         # Add score to the CV window
         cv2.putText(annotated_image, "Score: {}".format(push_up_count * 10), (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
