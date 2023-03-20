@@ -18,8 +18,13 @@ wood = cv2.resize(wood, (size, size), interpolation=cv2.INTER_LINEAR)
 img2gray = cv2.cvtColor(wood, cv2.COLOR_BGR2GRAY)
 ret, mask = cv2.threshold(img2gray, 1, 255, cv2.THRESH_BINARY)
 
+# fps = int(cap.get(cv2.CAP_PROP_FPS))
+tick = cv2.getTickCount()
+
 with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
     while True:
+        tick = cv2.getTickCount()
+        fps = cv2.getTickFrequency() / (cv2.getTickCount() - tick)
         rval, frame = cap.read()
 
         h, w, channels = frame.shape
@@ -39,7 +44,8 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
 
             
             except Exception:
-                print(traceback.format_exc())
+                pass
+                #print(traceback.format_exc())
                 
             #zet writeable op false om ervoor te zorgen dat de image beter procest
             split_frame.flags.writeable = False
@@ -55,6 +61,11 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
             mp_drawing.draw_landmarks(split_frame, result.pose_landmarks, mp_pose.POSE_CONNECTIONS,
             mp_drawing.DrawingSpec(color=(245, 117, 66), thickness=2, circle_radius=2),
             mp_drawing.DrawingSpec(color=(245, 66, 230), thickness=2, circle_radius=2),)
+
+            #Add the FPS count to the window
+            # fps_text = "FPS: {:.2f}".format(cap.get(cv2.CAP_PROP_FPS))
+            # cv2.putText(split_frame, fps_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            cv2.putText(frame, "FPS: {:.2f}".format(fps), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
             cv2.imshow(f'split frame {i}', split_frame)
         # full_frame = cv2.hconcat(split_frames)
