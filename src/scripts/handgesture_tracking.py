@@ -5,10 +5,12 @@ mp_drawing_styles = mp.solutions.drawing_styles
 mp_hands = mp.solutions.hands
 
 # For webcam input:
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 if not (cap.isOpened()):
   print("Could not open camera")
 else:
+  fps = int(cap.get(cv2.CAP_PROP_FPS))
+  cap.set(cv2.CAP_PROP_FPS, 60)
   with mp_hands.Hands(
       model_complexity=0,
       min_detection_confidence=0.5,
@@ -38,7 +40,13 @@ else:
               mp_drawing_styles.get_default_hand_landmarks_style(),
               mp_drawing_styles.get_default_hand_connections_style())
       # Flip the image horizontally for a selfie-view display.
-      cv2.imshow('MediaPipe Hands', cv2.flip(image, 1))
+      image = cv2.flip(image, 1)
+      
+      #Add the FPS count to the window
+      fps_text = "FPS: {:.2f}".format(cap.get(cv2.CAP_PROP_FPS))
+      cv2.putText(image, fps_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+      
+      cv2.imshow('MediaPipe Hands', image)
       if cv2.waitKey(5) & 0xFF == 27:
         break
   cap.release()
