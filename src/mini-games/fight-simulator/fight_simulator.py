@@ -1,3 +1,5 @@
+import time
+
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -12,9 +14,37 @@ pose_model = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=
 # Initialize video capture
 video_capture = cv2.VideoCapture(0)
 
+number_of_players = 1
+players = []
+
 # Initialize jab counter variable
 number_of_jabs = 0
 stage = "hit"
+
+
+class Player:
+    left_hand_track_points = []
+    left_hand_track_lengths = []
+    left_hand_track_current = 0
+    left_hand_track_previous_point = 0, 0
+
+    right_hand_track_points = []
+    right_hand_track_lengths = []
+    right_hand_track_current = 0
+    right_hand_track_previous_point = 0, 0
+
+    right_foot_track_points = []
+    right_foot_track_lengths = []
+    right_foot_track_current = 0
+    right_foot_track_previous_point = 0, 0
+
+    left_foot_track_points = []
+    left_foot_track_lengths = []
+    left_foot_track_current = 0
+    left_foot_track_previous_point = 0, 0
+
+    score = 0
+    spawn_time = time.time()
 
 
 def calculate_angle(first_point, mid_point, end_point):
@@ -48,6 +78,7 @@ def track_left_hand(player, landmarks, width, height):
     px_left, py_left = player.left_hand_track_previous_point
     distance_left_hand = math.hypot(cx_left - px_left, cy_left - py_left)
 
+    print("distance ", distance_left_hand)
     player.left_hand_track_points.append([cx_left, cy_left])
     player.left_hand_track_lengths.append(distance_left_hand)
     player.left_hand_track_current += distance_left_hand
@@ -91,8 +122,16 @@ def draw_on_frame(image, angle, left_elbow_xy, number_of_jabs, results):
     cv2.imshow('Webcam', image)
 
 
+def create_players():
+    for i in range(number_of_players):
+        players.append(Player())
+
+
 def main_loop():
     global number_of_jabs, stage
+
+    create_players()
+
     while video_capture.isOpened():
         # Capture frame-by-frame
         ret, frame = video_capture.read()
@@ -117,9 +156,8 @@ def main_loop():
             # Update the stage and jab counter
             stage, number_of_jabs = detect_jab(angle, stage, left_wrist_visibility,
                                                left_elbow_visibility, number_of_jabs)
-
-            track_left_hand(results.pose_landmarks.landmark, image.shape[1], image.shape[0])
-
+            for player in players:
+                track_left_hand(player, results.pose_landmarks.landmark, image.shape[1], image.shape[0])
 
             # Draw on the frame
             draw_on_frame(image, angle, left_elbow_xy, number_of_jabs, results)
