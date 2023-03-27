@@ -10,7 +10,6 @@ if (Test-Path $pythonPath) {
 }
 
 # Create the virtual environment
-& Set-Location .\src
 & $pythonPath -m venv venv
 
 # Activate the virtual environment
