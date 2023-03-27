@@ -1,6 +1,7 @@
 import cv2
 import mediapipe as mp
 import numpy as np
+import math
 
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
@@ -41,7 +42,19 @@ def get_landmarks(results):
     return left_shoulder_xy, left_elbow_xy, left_wrist_xy, left_wrist.visibility, left_elbow.visibility
 
 
-def update_stage_and_jab_counter(angle, stage, left_wrist_visibility, left_elbow_visibility, number_of_jabs):
+def track_left_hand(player, landmarks, width, height):
+    cx_left, cy_left = int(landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].x * width), int(
+        landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].y * height)
+    px_left, py_left = player.left_hand_track_previous_point
+    distance_left_hand = math.hypot(cx_left - px_left, cy_left - py_left)
+
+    player.left_hand_track_points.append([cx_left, cy_left])
+    player.left_hand_track_lengths.append(distance_left_hand)
+    player.left_hand_track_current += distance_left_hand
+    player.left_hand_track_previous_point = cx_left, cy_left
+
+
+def detect_jab(angle, stage, left_wrist_visibility, left_elbow_visibility, number_of_jabs):
     if angle > 120 and stage == "hit" and left_wrist_visibility > 0.5 and left_elbow_visibility > 0.5:
         stage = "stretched"
 
@@ -50,6 +63,13 @@ def update_stage_and_jab_counter(angle, stage, left_wrist_visibility, left_elbow
         number_of_jabs += 1
 
     return stage, number_of_jabs
+
+
+def detect_hook(angle, stage, left_wrist_visibility, left_elbow_visibility):
+    if 60 < angle < 130 and stage == "hit" and left_wrist_visibility > 0.5 and left_elbow_visibility > 0.5:
+        stage = "hook angle"
+
+    return False, stage
 
 
 def draw_on_frame(image, angle, left_elbow_xy, number_of_jabs, results):
@@ -95,8 +115,11 @@ def main_loop():
             angle = calculate_angle(left_shoulder_xy, left_elbow_xy, left_wrist_xy)
 
             # Update the stage and jab counter
-            stage, number_of_jabs = update_stage_and_jab_counter(angle, stage, left_wrist_visibility,
-                                                                 left_elbow_visibility, number_of_jabs)
+            stage, number_of_jabs = detect_jab(angle, stage, left_wrist_visibility,
+                                               left_elbow_visibility, number_of_jabs)
+
+            track_left_hand(results.pose_landmarks.landmark, image.shape[1], image.shape[0])
+
 
             # Draw on the frame
             draw_on_frame(image, angle, left_elbow_xy, number_of_jabs, results)
