@@ -1,7 +1,7 @@
 # Imports
 import cv2
 import mediapipe as mp
-from pose_detector import PoseDetector
+from services.pose_detector_service import PoseDetectorService
 
 
 mp_drawing = mp.solutions.drawing_utils

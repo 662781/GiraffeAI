@@ -1,14 +1,14 @@
 from ultralytics import YOLO
 import cv2
-from service.game_menu import GameMenu
+from models.game_menu import GameMenu
 
-# Load the custom model
-model = YOLO('yolov8n-pose.yaml').load('yolov8n-pose.pt')  # build from YAML and transfer weights
+# Load the custom YOLOv8 model
+model = YOLO('model.yaml').load('weights.pt')  # build from YAML and transfer weights
 players = []
 # Time in minutes to compete for points in the chosen exercise game
 timer = 240
 # Check which exercise is chosen (Push-Up, Sit-Up, Jumping Jack, Squat, Remix (all at once))
-exercise = GameMenu.chosen_exercise()
+exercise = GameMenu.chosen_exercise
 # Load video file
 cap = cv2.VideoCapture(0)
 

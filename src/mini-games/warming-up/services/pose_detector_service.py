@@ -1,4 +1,4 @@
-class PoseDetector:
+class PoseDetectorService:
     def does_push_up(results, mp):
         if results.pose_landmarks is not None:
             # Get the landmarks for the hips, shoulders and elbows
