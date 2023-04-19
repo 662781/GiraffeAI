@@ -147,6 +147,10 @@ def create_players():
     for i in range(number_of_players):
         players.append(Player())
 
+def draw_snake_line(image, player, color):
+    for i in range(1, len(player.left_hand_track_points)):
+        if player.left_hand_track_lengths[i-1] != 0:
+            cv2.line(image, tuple(player.left_hand_track_points[i-1]), tuple(player.left_hand_track_points[i]), color, 3)
 
 def main_loop():
     global stage
@@ -184,6 +188,8 @@ def main_loop():
 
             # Draw on the frame
             draw_on_frame(image, angle, left_elbow_xy, number_of_jabs, results)
+
+            draw_snake_line(image, player, (0, 255, 0))  # Use green color for the line
 
             # Display the punch counters on the image for the first player
             player = players[0]
