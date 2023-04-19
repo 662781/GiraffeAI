@@ -117,8 +117,8 @@ def track_left_hand(player, landmarks, width, height):
     px_left, py_left = player.left_hand_track_previous_point
     distance_left_hand = math.hypot(cx_left - px_left, cy_left - py_left)
 
-    print("distance ", distance_left_hand)
-    player.left_hand_track_points.append([cx_left, cy_left])
+    current_time = time.time()
+    player.left_hand_track_points.append(([cx_left, cy_left], current_time))
     player.left_hand_track_lengths.append(distance_left_hand)
     player.left_hand_track_current += distance_left_hand
     player.left_hand_track_previous_point = cx_left, cy_left
@@ -148,9 +148,12 @@ def create_players():
         players.append(Player())
 
 def draw_snake_line(image, player, color):
+    current_time = time.time()
+    player.left_hand_track_points = [(point, timestamp) for point, timestamp in player.left_hand_track_points if current_time - timestamp <= 3]
+
     for i in range(1, len(player.left_hand_track_points)):
         if player.left_hand_track_lengths[i-1] != 0:
-            cv2.line(image, tuple(player.left_hand_track_points[i-1]), tuple(player.left_hand_track_points[i]), color, 3)
+            cv2.line(image, tuple(player.left_hand_track_points[i-1][0]), tuple(player.left_hand_track_points[i][0]), color, 3)
 
 def main_loop():
     global stage
