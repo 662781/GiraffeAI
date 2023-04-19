@@ -147,13 +147,18 @@ def create_players():
     for i in range(number_of_players):
         players.append(Player())
 
+
 def draw_snake_line(image, player, color):
+    line_time = 3
     current_time = time.time()
-    player.left_hand_track_points = [(point, timestamp) for point, timestamp in player.left_hand_track_points if current_time - timestamp <= 3]
+    player.left_hand_track_points = [(point, timestamp) for point, timestamp in player.left_hand_track_points if
+                                     current_time - timestamp <= line_time]
 
     for i in range(1, len(player.left_hand_track_points)):
-        if player.left_hand_track_lengths[i-1] != 0:
-            cv2.line(image, tuple(player.left_hand_track_points[i-1][0]), tuple(player.left_hand_track_points[i][0]), color, 3)
+        if player.left_hand_track_lengths[i - 1] != 0:
+            cv2.line(image, tuple(player.left_hand_track_points[i - 1][0]), tuple(player.left_hand_track_points[i][0]),
+                     color, 3)
+
 
 def main_loop():
     global stage
