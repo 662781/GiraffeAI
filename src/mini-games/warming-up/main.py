@@ -22,13 +22,15 @@ while cap.isOpened():
 
     # Process frame and put it through the model (what activity / pose is detected, how many people)
 
-    # Assign all detected people to a Player class (with a current_score)
+    # Assign all detected people to a Player class (with e.g. a current_score and high_score)
+
+    # Split the CV window into multiple frames for each player
 
     # Draw the keypoints (only for testing) and add class name to visualize the current detected activity / pose of all players in the CV window
 
     # Start keeping score of the chosen exercise for each player. Add the score to each players total.
 
-    # Put the score of each player in the CV window
+    # Put the score of each player in their frame of the CV window
 
     # Load the game-UI in the CV window
 
