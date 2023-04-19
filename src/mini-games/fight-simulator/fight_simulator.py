@@ -1,5 +1,4 @@
 import time
-
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -51,14 +50,15 @@ class Player:
     spawn_time = time.time()
 
 
-def detect_punch(player, angle, stage, left_wrist_xy, left_elbow_xy, left_wrist_visibility, left_elbow_visibility):
+def detect_punch(player, angle, stage, left_wrist_xy, left_wrist_visibility, left_elbow_visibility):
     # Calculate horizontal and vertical movement of the left wrist
     wrist_dx = left_wrist_xy[0] - player.left_hand_track_previous_point[0]
     wrist_dy = left_wrist_xy[1] - player.left_hand_track_previous_point[1]
 
     # Detect jab
-    if angle > 120 and stage["jab"] == "reset" and left_wrist_visibility > 0.5 and left_elbow_visibility > 0.5 and abs(
-            wrist_dy) > abs(wrist_dx):
+    if angle > 120 and stage[
+        "jab"] == "reset" and left_wrist_visibility > min_visiblity and left_elbow_visibility > min_visiblity and abs(
+        wrist_dy) > abs(wrist_dx):
         stage["jab"] = "stretched"
     if angle < 20 and stage["jab"] == "stretched":
         stage["jab"] = "reset"
@@ -66,7 +66,8 @@ def detect_punch(player, angle, stage, left_wrist_xy, left_elbow_xy, left_wrist_
 
     # Detect hook
     if 60 < angle < 130 and stage[
-        "hook"] == "reset" and left_wrist_visibility > 0.5 and left_elbow_visibility > 0.5 and abs(wrist_dx) > abs(
+        "hook"] == "reset" and left_wrist_visibility > min_visiblity and left_elbow_visibility > min_visiblity and abs(
+        wrist_dx) > abs(
         wrist_dy):
         stage["hook"] = "hook angle"
     if angle < 60 and stage["hook"] == "hook angle":
@@ -75,7 +76,7 @@ def detect_punch(player, angle, stage, left_wrist_xy, left_elbow_xy, left_wrist_
 
     # Detect uppercut
     if angle > 150 and stage[
-        "uppercut"] == "reset" and left_wrist_visibility > 0.5 and left_elbow_visibility > 0.5 and wrist_dy > abs(
+        "uppercut"] == "reset" and left_wrist_visibility > min_visiblity and left_elbow_visibility > min_visiblity and wrist_dy > abs(
         wrist_dx):
         stage["uppercut"] = "stretched"
     if angle < 90 and stage["uppercut"] == "stretched":
@@ -121,24 +122,6 @@ def track_left_hand(player, landmarks, width, height):
     player.left_hand_track_lengths.append(distance_left_hand)
     player.left_hand_track_current += distance_left_hand
     player.left_hand_track_previous_point = cx_left, cy_left
-
-
-def detect_jab(angle, stage, left_wrist_visibility, left_elbow_visibility, number_of_jabs):
-    if angle > 120 and stage == "hit" and left_wrist_visibility > 0.5 and left_elbow_visibility > 0.5:
-        stage = "stretched"
-
-    if angle < 20 and stage == "stretched":
-        stage = "hit"
-        number_of_jabs += 1
-
-    return stage, number_of_jabs
-
-
-def detect_hook(angle, stage, left_wrist_visibility, left_elbow_visibility):
-    if 60 < angle < 130 and stage == "hit" and left_wrist_visibility > 0.5 and left_elbow_visibility > 0.5:
-        stage = "hook angle"
-
-    return False, stage
 
 
 def draw_on_frame(image, angle, left_elbow_xy, number_of_jabs, results):
@@ -196,7 +179,7 @@ def main_loop():
                 track_left_hand(player, results.pose_landmarks.landmark, image.shape[1], image.shape[0])
 
                 # Update the stage and punch counters for each player
-                stage = detect_punch(player, angle, stage, left_wrist_xy, left_elbow_xy, left_wrist_visibility,
+                stage = detect_punch(player, angle, stage, left_wrist_xy, left_wrist_visibility,
                                      left_elbow_visibility)
 
             # Draw on the frame
