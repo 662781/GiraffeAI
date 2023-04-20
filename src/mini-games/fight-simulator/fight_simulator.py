@@ -50,15 +50,42 @@ class Player:
     spawn_time = time.time()
 
 
-def detect_punch(player, angle, stage, left_wrist_xy, left_wrist_visibility, left_elbow_visibility):
-    # Calculate horizontal and vertical movement of the left wrist
-    wrist_dx = left_wrist_xy[0] - player.left_hand_track_previous_point[0]
-    wrist_dy = left_wrist_xy[1] - player.left_hand_track_previous_point[1]
+def moving_average(points, n):
+    if len(points) < n:
+        return points[-1][0]  # Return the last point if not enough points are available
+
+    sum_x, sum_y = 0, 0
+    for i in range(-n, 0):
+        sum_x += points[i][0][0]
+        sum_y += points[i][0][1]
+
+    return int(sum_x / n), int(sum_y / n)
+
+# Calculate the direction of the last n points
+def get_direction(player, n):
+    # Return 0, 0 if not enough points are available
+    if len(player.left_hand_track_points) < 2:
+        return 0, 0  # Return 0, 0 if not enough points are available
+    # Calculate the moving average of the last n points
+    current_avg = moving_average(player.left_hand_track_points, n)
+    # Calculate the moving average of the previous n points
+    prev_avg = moving_average(player.left_hand_track_points[:-1], n)
+
+    # Calculate the direction
+    dx = current_avg[0] - prev_avg[0]
+    dy = current_avg[1] - prev_avg[1]
+
+    #dx is the change in x direction and dy is the change in y direction
+    return dx, dy
+
+
+def detect_punch(player, angle, stage, left_wrist_visibility, left_elbow_visibility):
+    dx, dy = get_direction(player, 5)  # Calculate the direction based on the last 5 points
 
     # Detect jab
     if angle > 120 and stage[
         "jab"] == "reset" and left_wrist_visibility > min_visiblity and left_elbow_visibility > min_visiblity and abs(
-        wrist_dy) > abs(wrist_dx):
+        dy) > abs(dx):
         stage["jab"] = "stretched"
     if angle < 20 and stage["jab"] == "stretched":
         stage["jab"] = "reset"
@@ -67,17 +94,16 @@ def detect_punch(player, angle, stage, left_wrist_xy, left_wrist_visibility, lef
     # Detect hook
     if 60 < angle < 130 and stage[
         "hook"] == "reset" and left_wrist_visibility > min_visiblity and left_elbow_visibility > min_visiblity and abs(
-        wrist_dx) > abs(
-        wrist_dy):
+        dx) > abs(dy):
         stage["hook"] = "hook angle"
     if angle < 60 and stage["hook"] == "hook angle":
         stage["hook"] = "reset"
         player.score["hook"] += 1
 
-    # Detect uppercut
+        # Detect uppercut
     if angle > 150 and stage[
-        "uppercut"] == "reset" and left_wrist_visibility > min_visiblity and left_elbow_visibility > min_visiblity and wrist_dy > abs(
-        wrist_dx):
+        "uppercut"] == "reset" and left_wrist_visibility > min_visiblity and left_elbow_visibility > min_visiblity and dy > abs(
+        dx):
         stage["uppercut"] = "stretched"
     if angle < 90 and stage["uppercut"] == "stretched":
         stage["uppercut"] = "reset"
@@ -112,25 +138,29 @@ def get_landmarks(results):
 
 
 def track_left_hand(player, landmarks, width, height):
-    cx_left, cy_left = int(landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].x * width), int(
-        landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].y * height)
-    px_left, py_left = player.left_hand_track_previous_point
-    distance_left_hand = math.hypot(cx_left - px_left, cy_left - py_left)
+    min_detection_accuracy = 0.9
+    left_index = landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value]
+    cx_left, cy_left = int(left_index.x * width), int(left_index.y * height)
+    detection_accuracy = left_index.visibility
 
-    current_time = time.time()
-    player.left_hand_track_points.append(([cx_left, cy_left], current_time))
-    player.left_hand_track_lengths.append(distance_left_hand)
-    player.left_hand_track_current += distance_left_hand
-    player.left_hand_track_previous_point = cx_left, cy_left
+    if detection_accuracy > min_detection_accuracy:
+        px_left, py_left = player.left_hand_track_previous_point
+        distance_left_hand = math.hypot(cx_left - px_left, cy_left - py_left)
 
+        current_time = time.time()
+        player.left_hand_track_points.append(([cx_left, cy_left], current_time))
+        player.left_hand_track_lengths.append(distance_left_hand)
+        player.left_hand_track_current += distance_left_hand
+        player.left_hand_track_previous_point = cx_left, cy_left
 
-def draw_on_frame(image, angle, left_elbow_xy, number_of_jabs, results):
+def draw_on_frame(image, angle, left_elbow_xy, number_of_jabs, results, dx, dy):
     cv2.putText(image, str(angle), tuple(np.multiply(left_elbow_xy, [640, 480]).astype(int)),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2, cv2.LINE_AA)
 
     # Display the jab counter on the image
     cv2.putText(image, str(int(number_of_jabs)), (10, 70), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
-
+    cv2.putText(image, f"dx: {dx:.2f}, dy: {dy:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2,
+                cv2.LINE_AA)
     # Convert the image back to BGR for display
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
@@ -191,11 +221,13 @@ def main_loop():
                 track_left_hand(player, results.pose_landmarks.landmark, image.shape[1], image.shape[0])
 
                 # Update the stage and punch counters for each player
-                stage = detect_punch(player, angle, stage, left_wrist_xy, left_wrist_visibility,
+                stage = detect_punch(player, angle, stage, left_wrist_visibility,
                                      left_elbow_visibility)
 
             # Draw on the frame
-            draw_on_frame(image, angle, left_elbow_xy, number_of_jabs, results)
+            # In the main_loop function
+            wrist_dx, wrist_dy = get_direction(player, 5)
+            draw_on_frame(image, angle, left_elbow_xy, number_of_jabs, results, dx=wrist_dx, dy=wrist_dy)
 
             draw_snake_line(image, player, (0, 255, 0))  # Use green color for the line
 
