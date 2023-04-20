@@ -31,7 +31,7 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
         cv2.putText(annotated_image, "Score: {}".format(push_up_count * 10), (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
         # Check if the person is doing a push-up
-        if PoseDetector.does_push_up(results, mp):
+        if PoseDetectorService.does_push_up(results, mp):
             push_up_count += 1
 
         # Show the frame

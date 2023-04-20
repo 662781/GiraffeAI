@@ -3,7 +3,8 @@ import cv2
 from models.game_menu import GameMenu
 
 # Load the custom YOLOv8 model
-model = YOLO('model.yaml').load('weights.pt')  # build from YAML and transfer weights
+model = YOLO('dl-model/yolov8n-pose.pt')  # load a pretrained model (recommended for training)
+# model.to('cuda')
 players = []
 # Time in minutes to compete for points in the chosen exercise game
 timer = 240
@@ -34,8 +35,18 @@ while cap.isOpened():
 
     # Load the game-UI in the CV window
 
+    cv2.namedWindow("Warming-Up | CV DOJO", cv2.WINDOW_NORMAL)
+    cv2.setWindowProperty("Warming-Up | CV DOJO", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+
+    results = model(frame, save=False)
+    annotated_frame = results[0].plot()
+
+    # print(type(frame))
+    # print(type(annotated_frame))
+    # print(type(results))
+
     # Display frame
-    cv2.imshow("Warming-Up | CV DOJO", frame)
+    cv2.imshow("Warming-Up | CV DOJO", annotated_frame)
 
     # Exit loop if 'q' key is pressed
     if cv2.waitKey(1) & 0xFF == ord('q'):
