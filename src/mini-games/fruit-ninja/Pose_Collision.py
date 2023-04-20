@@ -48,18 +48,18 @@ class Player:
 
     def draw_tracking_lines(self, image):
         return
-        cv2.line(image, self.left_hand_track_points[i-1], self.left_hand_track_points[i], (0,0,255),5)
-        cv2.line(image, self.right_hand_track_points[i-1], self.right_hand_track_points[i], (0,0,255),5)
-        cv2.line(image, self.right_foot_track_points[i-1], self.right_foot_track_points[i], (0,0,255),5)
-        cv2.line(image, self.left_foot_track_points[i-1], self.left_foot_track_points[i], (0,0,255),5)
+        cv2.line(image, self.left_hand_track_points[i-1], self.left_hand_track_points[i], (0,0,255),2)
+        cv2.line(image, self.right_hand_track_points[i-1], self.right_hand_track_points[i], (0,0,255),2)
+        cv2.line(image, self.right_foot_track_points[i-1], self.right_foot_track_points[i], (0,0,255),2)
+        cv2.line(image, self.left_foot_track_points[i-1], self.left_foot_track_points[i], (0,0,255),2)
 
     def check_hit(self, frame, woodLine):
         for i, point in enumerate(self.left_hand_track_points): # any track point will do
                 if i != 0:
-                    cv2.line(image, self.left_hand_track_points[i-1], self.left_hand_track_points[i], (0,0,255),25)
-                    cv2.line(image, self.right_hand_track_points[i-1], self.right_hand_track_points[i], (0,0,255),25)
-                    cv2.line(image, self.right_foot_track_points[i-1], self.right_foot_track_points[i], (0,0,255),25)
-                    cv2.line(image, self.left_foot_track_points[i-1], self.left_foot_track_points[i], (0,0,255),25)
+                    cv2.line(image, self.left_hand_track_points[i-1], self.left_hand_track_points[i], (0,0,255),5)
+                    cv2.line(image, self.right_hand_track_points[i-1], self.right_hand_track_points[i], (0,0,255),5)
+                    cv2.line(image, self.right_foot_track_points[i-1], self.right_foot_track_points[i], (0,0,255),5)
+                    cv2.line(image, self.left_foot_track_points[i-1], self.left_foot_track_points[i], (0,0,255),5)
 
                     line_left_hand = LineString([self.left_hand_track_points[i-1], self.left_hand_track_points[i]])
                     line_right_hand = LineString([self.right_hand_track_points[i-1], self.right_hand_track_points[i]])
@@ -115,9 +115,9 @@ def calculate_angle(first_point, mid_point, end_point):
         angle = 360 - angle
     return angle
 
-video_capture = cv2.VideoCapture('/dev/video2')
-video_capture.set(3, 1024)
-video_capture.set(4, 720)
+video_capture = cv2.VideoCapture(0)
+video_capture.set(3, 480)
+video_capture.set(4, 320)
 #jab counter variable
 number_of_jabs = 0
 stage = "hit"
@@ -142,6 +142,9 @@ fps = video_capture.get(cv2.CAP_PROP_FPS)
 print("FPS CAMERA: " + str(int(fps)))
 spawn_time = time.time()
 num_frames = 1
+
+cv2.namedWindow("webcam", cv2.WINDOW_NORMAL)
+cv2.setWindowProperty("webcam", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
 bg_image = cv2.imread("resources/dojo.png")
 with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5, model_complexity=0) as pose:
