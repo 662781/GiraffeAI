@@ -2,8 +2,10 @@ from ultralytics import YOLO
 import cv2
 import torch
 import time
+import pprint
 from models.game_menu import GameMenu
 from services.fps_counter_service import FPSCounterService
+from services.player_service import PlayerService
 
 # Load the custom YOLOv8 model
 model = YOLO('dl-model/yolov8n-pose.pt')  # load a pretrained model (recommended for training)
@@ -11,6 +13,7 @@ model = YOLO('dl-model/yolov8n-pose.pt')  # load a pretrained model (recommended
 #model.to('cuda')
 
 players = []
+score = 0
 # Time in minutes to compete for points in the chosen exercise game
 timer = 240
 # Check which exercise is chosen (Push-Up, Sit-Up, Jumping Jack, Squat, Remix (all at once))
@@ -50,8 +53,16 @@ while cap.isOpened():
     
     # Start keeping score of the chosen exercise for each player. Add the score to each players total.
 
-    # Put the score of each player in their frame of the CV window
+    keypoints = results[0].keypoints.squeeze().tolist()
+    # pprint.pprint(results[0].keypoints.squeeze().tolist())
+    # pprint.pprint(keypoints)
+    if(keypoints != None and PlayerService.does_pushup(keypoints)):
+        score = score + 1
 
+    # Put the score of each player in their frame of the CV window
+    # This puts the score of 1 player on the screen
+    cv2.putText(annotated_frame, "Score: {}".format(score), (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+    
     # Load the game-UI in the CV window
 
     # Display frame
