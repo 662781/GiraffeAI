@@ -38,7 +38,7 @@ while cap.isOpened():
 
     # Process frame and put it through the model (what activity / pose is detected, how many people)
     # This can currently only classify people
-    results = model(frame, save=False)
+    results = model(frame)
 
     # Assign all detected people to a Player class (with e.g. a current_score and high_score)
 
