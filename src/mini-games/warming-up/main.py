@@ -1,4 +1,6 @@
 from ultralytics import YOLO
+from ultralytics.yolo.engine.results import Results
+from ultralytics.yolo.utils.plotting import Annotator
 import cv2
 import torch
 import time
@@ -6,9 +8,10 @@ import pprint
 from models.game_menu import GameMenu
 from services.fps_counter_service import FPSCounterService
 from services.player_service import PlayerService
+from services.keypoint_service import KeypointService
 
 # Load the custom YOLOv8 model
-model = YOLO('dl-model/yolov8n-pose.pt')  # load a pretrained model (recommended for training)
+model: YOLO = YOLO('dl-model/yolov8n-pose.pt')  # load a pretrained model (recommended for training)
 # Use CUDA, AKA the GPU
 #model.to('cuda')
 
@@ -40,8 +43,8 @@ while cap.isOpened():
     FPSCounterService.show_fps(frame, time.time(), FPSCounterService)
 
     # Process frame and put it through the model (what activity / pose is detected, how many people)
-    # This can currently only classify people
-    results = model(frame)
+    # This can currently only classify multiple people
+    results: Results = model.predict(frame)[0]
 
     # Assign all detected people to a Player class (with e.g. a current_score and high_score)
 
@@ -49,15 +52,19 @@ while cap.isOpened():
 
     # Draw the keypoints (only for testing) and add class name to visualize the current detected activity / pose of all players in the CV window
     # Draws the bounding box & keypoints from the YOLOv8 model
-    annotated_frame = results[0].plot()
+    annotated_frame = results.plot()
     
-    # Start keeping score of the chosen exercise for each player. Add the score to each players total.
+    # Show all keypoint numbers   
+    keypoints = results.keypoints.squeeze().tolist()
+    ann = Annotator(annotated_frame)
+    KeypointService.showKeypointNrs(ann, keypoints)
 
-    keypoints = results[0].keypoints.squeeze().tolist()
-    # pprint.pprint(results[0].keypoints.squeeze().tolist())
     # pprint.pprint(keypoints)
-    if(keypoints != None and PlayerService.does_pushup(keypoints)):
-        score = score + 1
+    # pprint.pprint(len(keypoints))
+
+    # Start keeping score of the chosen exercise for each player. Add the score to each players total.
+    # if(keypoints is not None and PlayerService.does_pushup(keypoints)):
+    #     score = score + 1
 
     # Put the score of each player in their frame of the CV window
     # This puts the score of 1 player on the screen
