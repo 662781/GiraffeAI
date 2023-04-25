@@ -39,6 +39,9 @@ while cap.isOpened():
     if not ret:
         break
 
+    # Flip the frame (selfie mode)
+    frame = cv2.flip(frame, 1)
+
     # Show FPS in the CV Window
     FPSCounterService.show_fps(frame, time.time(), FPSCounterService)
 
