@@ -59,7 +59,7 @@ class KeypointService:
         number = -1
         if key >= ord('0') and key <= ord('9'):
             number = key - ord('0')
-        if key == ord('n'):
+        if key == ord('d'):
             mode = 0
         if key == ord('s'):
             mode = 1
