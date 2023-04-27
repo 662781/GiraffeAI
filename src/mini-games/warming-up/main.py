@@ -37,6 +37,9 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 #print(torch.cuda.is_available())
 
+# Set the default mode
+mode = 0
+
 while cap.isOpened():
     # Read frame
     ret, frame = cap.read()
@@ -44,6 +47,17 @@ while cap.isOpened():
     # Break loop if video ends
     if not ret:
         break
+
+    # Check for user input
+    key = cv2.waitKey(1) & 0xFF
+    # Stop application if 'q' key is pressed
+    if key == ord('q'):
+        break
+    
+    # Save the letter & number pressed to determine the "mode" (0 = default, 1 = snapshot mode)
+    # In mode 1, any number between 0 - 9 can be pressed to take a snap shot of the current keypoints with that number as a prefix
+    # This number is based off of the index of one of the classes in "classifier_classes.csv" (e.g. PushUp_Down)
+    number, mode = KeypointService.select_mode(key, mode)
 
     # Flip the frame (selfie mode)
     frame = cv2.flip(frame, 1)
@@ -74,28 +88,31 @@ while cap.isOpened():
     # Pre-process keypoints for keypoint / pose prediction input
     proc_keypoints = kp_serv.pre_process_keypoints(keypoints)
 
+    # If 'k' is pressed and a number between 0 - 9, save current keypoints to csv
+    KeypointService.write_kp_data_to_csv(number, mode, proc_keypoints)
+
     # Debug
     # pprint.pprint(keypoints)
-    pprint.pprint(proc_keypoints)
-    pprint.pprint(len(proc_keypoints))
+    # pprint.pprint(proc_keypoints)
+    # pprint.pprint(len(proc_keypoints))
     # pprint.pprint(len(keypoints))
 
     # Start keeping score of the chosen exercise for each player. Add the score to each players total.
-    if(keypoints is not None and PlayerService.does_pushup(keypoints)):
-        score = score + 1
+    # if(keypoints is not None and PlayerService.does_pushup(keypoints)):
+    #     score = score + 1
 
     # Put the score of each player in their frame of the CV window
     # This puts the score of 1 player on the screen
     cv2.putText(annotated_frame, "Score: {}".format(score), (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+
+    # Place an indicator of the mode on screen if it's 1
+    if mode == 1:
+        cv2.putText(annotated_frame, "Snapshot Mode", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
     
     # Load the game-UI in the CV window
 
     # Display frame
     cv2.imshow("Warming-Up | CV DOJO", annotated_frame)
-
-    # Stop application if 'q' key is pressed
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
 
 # Release video capture and close windows
 cap.release()

@@ -1,6 +1,7 @@
 from ultralytics.yolo.utils.plotting import Annotator
 import itertools
 import copy
+import csv
 class KeypointService:
     def show_keypoint_nrs(ann: Annotator, keypoints: list):
         for i, kp in enumerate(keypoints):
@@ -43,3 +44,23 @@ class KeypointService:
     def __remove_conf_rate(keypoints):
         for kp in keypoints:
             del kp[2]
+
+    def write_kp_data_to_csv(number, mode, keypoints):
+        if mode == 0:
+            pass
+        if mode == 1 and (0 <= number <= 9):
+            csv_path = 'dl-model/keypoint-dataset.csv'
+            with open(csv_path, 'a', newline="") as f:
+                writer = csv.writer(f)
+                writer.writerow([number, *keypoints])
+        return
+    
+    def select_mode(key, mode):
+        number = -1
+        if key >= ord('0') and key <= ord('9'):
+            number = key - ord('0')
+        if key == ord('n'):
+            mode = 0
+        if key == ord('s'):
+            mode = 1
+        return number, mode
