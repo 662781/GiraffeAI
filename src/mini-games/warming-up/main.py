@@ -10,6 +10,9 @@ from services.fps_counter_service import FPSCounterService
 from services.player_service import PlayerService
 from services.keypoint_service import KeypointService
 
+# Load the service instances
+kp_serv = KeypointService()
+
 # Load the custom YOLOv8 model
 model: YOLO = YOLO('dl-model/yolov8n-pose.pt')  # load a pretrained model (recommended for training)
 # Use CUDA, AKA the GPU
@@ -17,17 +20,20 @@ model: YOLO = YOLO('dl-model/yolov8n-pose.pt')  # load a pretrained model (recom
 
 players = []
 score = 0
-# Time in minutes to compete for points in the chosen exercise game
-timer = 240
 # Check which exercise is chosen (Push-Up, Sit-Up, Jumping Jack, Squat, Remix (all at once))
 exercise = GameMenu.chosen_exercise
+# Time in minutes to compete for points in the chosen exercise game
+timer = 240
 
 # Capture video frames with "camera 0"
 cap = cv2.VideoCapture(0)
+# Set the capture resolution
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 # Set the window to full screen
-cv2.namedWindow("Warming-Up | CV DOJO", cv2.WINDOW_NORMAL)
-cv2.setWindowProperty("Warming-Up | CV DOJO", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+# cv2.namedWindow("Warming-Up | CV DOJO", cv2.WINDOW_NORMAL)
+# cv2.setWindowProperty("Warming-Up | CV DOJO", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
 #print(torch.cuda.is_available())
 
@@ -47,27 +53,36 @@ while cap.isOpened():
 
     # Process frame and put it through the model (what activity / pose is detected, how many people)
     # This can currently only classify multiple people
+    # Predict and get the results from YOLOv8 model
     results: Results = model.predict(frame)[0]
 
-    # Assign all detected people to a Player class (with e.g. a current_score and high_score)
-
     # Split the CV window into multiple frames for each player
+
+    # Assign all detected people to a Player class (with e.g. a current_score and high_score)
 
     # Draw the keypoints (only for testing) and add class name to visualize the current detected activity / pose of all players in the CV window
     # Draws the bounding box & keypoints from the YOLOv8 model
     annotated_frame = results.plot()
     
-    # Show all keypoint numbers   
+    # Get the keypoints in a list 
     keypoints = results.keypoints.squeeze().tolist()
+    
+    # Show all keypoint numbers  
     ann = Annotator(annotated_frame)
-    KeypointService.showKeypointNrs(ann, keypoints)
+    KeypointService.show_keypoint_nrs(ann, keypoints)
 
+    # Pre-process keypoints for keypoint / pose prediction input
+    proc_keypoints = kp_serv.pre_process_keypoints(keypoints)
+
+    # Debug
     # pprint.pprint(keypoints)
+    pprint.pprint(proc_keypoints)
+    pprint.pprint(len(proc_keypoints))
     # pprint.pprint(len(keypoints))
 
     # Start keeping score of the chosen exercise for each player. Add the score to each players total.
-    # if(keypoints is not None and PlayerService.does_pushup(keypoints)):
-    #     score = score + 1
+    if(keypoints is not None and PlayerService.does_pushup(keypoints)):
+        score = score + 1
 
     # Put the score of each player in their frame of the CV window
     # This puts the score of 1 player on the screen
