@@ -6,7 +6,7 @@ class PlayerService:
                 # Check if the keypoint exists
                 if i in check and kp is None:
                     return False
-                # Check if there's a second list in the keypoint (somehow)
+                # Check if there's a second list in the keypoint (when there a multiple persons detected)
                 if type(kp[0]) is list:
                     return False
         except:

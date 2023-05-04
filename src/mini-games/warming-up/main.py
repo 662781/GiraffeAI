@@ -19,6 +19,7 @@ model: YOLO = YOLO('dl-model/yolov8n-pose.pt')  # load a pretrained model (recom
 #model.to('cuda')
 
 players = []
+no_players = 1
 score = 0
 # Check which exercise is chosen (Push-Up, Sit-Up, Jumping Jack, Squat, Remix (all at once))
 exercise = GameMenu.chosen_exercise
@@ -65,10 +66,16 @@ while cap.isOpened():
     # Show FPS in the CV Window
     FPSCounterService.show_fps(frame, time.time(), FPSCounterService)
 
+    # Set writeable to false
+    frame.flags.writeable = False
+
     # Process frame and put it through the model (what activity / pose is detected, how many people)
     # This can currently only classify multiple people
     # Predict and get the results from YOLOv8 model
-    results: Results = model.predict(frame)[0]
+    results: Results = model.predict(frame, max_det=no_players)[0]
+
+    # Set writeable to true
+    frame.flags.writeable = True
 
     # Split the CV window into multiple frames for each player
 
@@ -81,25 +88,27 @@ while cap.isOpened():
     # Get the keypoints in a list 
     keypoints = results.keypoints.squeeze().tolist()
     
-    # Show all keypoint numbers  
-    ann = Annotator(annotated_frame)
-    KeypointService.show_keypoint_nrs(ann, keypoints)
+    if KeypointService.keypoints_detected(keypoints):
 
-    # Pre-process keypoints for keypoint / pose prediction input
-    proc_keypoints = kp_serv.pre_process_keypoints(keypoints)
+        # Show all keypoint numbers (custom annotation)
+        ann = Annotator(annotated_frame)
+        KeypointService.show_keypoint_nrs(ann, keypoints)
 
-    # If 'k' is pressed and a number between 0 - 9, save current keypoints to csv
-    KeypointService.write_kp_data_to_csv(number, mode, proc_keypoints)
+        # Pre-process keypoints for keypoint / pose prediction input
+        proc_keypoints = kp_serv.pre_process_keypoints(keypoints)
 
-    # Debug
-    # pprint.pprint(keypoints)
-    # pprint.pprint(proc_keypoints)
-    # pprint.pprint(len(proc_keypoints))
-    # pprint.pprint(len(keypoints))
+        # If 'k' is pressed and a number between 0 - 9, save current keypoints to csv
+        KeypointService.write_kp_data_to_csv(number, mode, proc_keypoints)
 
-    # Start keeping score of the chosen exercise for each player. Add the score to each players total.
-    # if(keypoints is not None and PlayerService.does_pushup(keypoints)):
-    #     score = score + 1
+        # Debug
+        # pprint.pprint(keypoints)
+        # pprint.pprint(proc_keypoints)
+        # pprint.pprint(len(proc_keypoints))
+        # pprint.pprint(len(keypoints))
+
+        # Start keeping score of the chosen exercise for each player. Add the score to each players total.
+        if(PlayerService.does_pushup(keypoints)):
+            score = score + 1
 
     # Put the score of each player in their frame of the CV window
     # This puts the score of 1 player on the screen

@@ -14,7 +14,7 @@ class KeypointService:
 
     def pre_process_keypoints(self, keypoints):
         temp_keypoint_list = copy.deepcopy(keypoints)
-
+            
         # Remove confidence rate from individual keypoints (index 2)
         KeypointService.__remove_conf_rate(temp_keypoint_list)
 
@@ -40,7 +40,7 @@ class KeypointService:
         temp_keypoint_list = list(map(normalize_, temp_keypoint_list))
 
         return temp_keypoint_list
-    
+        
     def __remove_conf_rate(keypoints):
         for kp in keypoints:
             del kp[2]
@@ -64,3 +64,8 @@ class KeypointService:
         if key == ord('s'):
             mode = 1
         return number, mode
+    
+    def keypoints_detected(keypoints):
+        if len(keypoints) == 0 or keypoints is None:
+            return False
+        return True
