@@ -6,7 +6,7 @@ mp_drawing_styles = mp.solutions.drawing_styles
 mp_hands = mp.solutions.hands
 
 # For webcam input:
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 if not (cap.isOpened()):
     print("Could not open camera")
 else:
@@ -24,9 +24,9 @@ else:
         continue
             # To improve performance, optionally mark the image as not writeable to
             # pass by reference.
-            image.flags.writeable = False
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            results = hands.process(image)
+      image.flags.writeable = False
+      image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+      results = hands.process(image)
       # Draw the hand annotations on the image.
       image.flags.writeable = True
       image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
