@@ -3,11 +3,17 @@ import cv2
 from utils import Generics
 import math
 from shapely.geometry import LineString, Polygon
+import pymunk
+
 class CVNinjaPlayer:
 
     def __init__(self):
         score = 0
         spawn_time = time.time()
+
+        # Create pymunk 
+
+
         # Init tracking
         self.left_hand_track_points = []
         self.left_hand_track_lengths = []
@@ -30,17 +36,17 @@ class CVNinjaPlayer:
         self.left_foot_track_previous_point = 0,0
 
     def update_tracking(self, keypoints):
-        left_wrist = (int(keypoints[9][0]), int(keypoints[9][1]))
-        left_elbow = (int(keypoints[7][0]), int(keypoints[7][1]))
+        right_wrist = (int(keypoints[9][0]), int(keypoints[9][1]))
+        right_elbow = (int(keypoints[7][0]), int(keypoints[7][1]))
         
-        right_wrist = (int(keypoints[10][0]), int(keypoints[10][1]))
-        right_elbow = (int(keypoints[8][0]), int(keypoints[8][1]))
+        left_wrist = (int(keypoints[10][0]), int(keypoints[10][1]))
+        left_elbow = (int(keypoints[8][0]), int(keypoints[8][1]))
 
-        left_ankle = (int(keypoints[15][0]), int(keypoints[15][1]))
-        left_knee = (int(keypoints[13][0]), int(keypoints[13][1]))
+        right_ankle = (int(keypoints[15][0]), int(keypoints[15][1]))
+        right_knee = (int(keypoints[13][0]), int(keypoints[13][1]))
 
-        right_ankle = (int(keypoints[16][0]), int(keypoints[16][1]))
-        right_knee = (int(keypoints[14][0]), int(keypoints[14][1]))
+        left_ankle = (int(keypoints[16][0]), int(keypoints[16][1]))
+        left_knee = (int(keypoints[14][0]), int(keypoints[14][1]))
 
         new_left_hand_coords = Generics.create_additional_keypoint(left_wrist, left_elbow)
         new_right_hand_coords =  Generics.create_additional_keypoint(right_wrist, right_elbow)
