@@ -17,6 +17,13 @@ collision_types = {
     "broken_objects" : 3,
     "void": 99, 
 }
+object_types = {
+    "wooden_plank":1,
+    "rock":2,
+    "wooden_plank_broken":3,
+    "rock_broken":4,
+}
+
 yolo_model = YOLO('yolov8m-pose.pt')  # load an official model
 number_of_players = 1 # todo: argument
 
@@ -29,6 +36,9 @@ camera_width = 640
 camera_height = 480
 
 def get_trailing(player, image):
+
+    line_left_leg_shape.unsafe_set_vertices([(player.left_foot_track_points[-1]), (player.left_foot_track_points[0])])
+    line_right_leg_shape.unsafe_set_vertices([(player.right_foot_track_points[-1]), (player.right_foot_track_points[0])])
     line_left_hand_shape.unsafe_set_vertices([(player.left_hand_track_points[-1]),(player.left_hand_track_points[0])])
     line_right_hand_shape.unsafe_set_vertices([(player.right_hand_track_points[-1]),(player.right_hand_track_points[0])])
     #hand_circle_body.velocity = (1000, 0)
@@ -46,36 +56,80 @@ cv2.setWindowProperty("webcam", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 cvFpsCalc = CvFpsCalc(buffer_len=10)
 current_player = "none"
 
-wood = cv2.imread('resources/wood.png', cv2.IMREAD_UNCHANGED)
-size = 80
+wood = cv2.imread('resources/plank.png', cv2.IMREAD_UNCHANGED)
+size = 50
 wood = cv2.resize(wood, (size, size), interpolation=cv2.INTER_LINEAR)
-img2gray = cv2.cvtColor(wood, cv2.COLOR_BGR2GRAY)
-ret, mask = cv2.threshold(img2gray, 1, 255, cv2.THRESH_BINARY)
+
 woodX=random.randint(100, camera_width-110)
 woodY=random.randint(100, 300)
 woodLine = Polygon([(woodX, woodY), (woodX, woodY+size),(woodX +size, woodY), (woodX +size, woodY +size)  ])
 
-plankie = cv2.imread("resources/wood.png")
+wood_contours = Generics.get_image_contours(wood)
+wood_vertices = []
+for contour in wood_contours:
+    for vertex in contour:
+        x, y = vertex[0]
+        wood_vertices.append((x, y))
+wood_horizontal_splice_left =  wood[:,:size//2]
+wood_horizontal_splice_left_contours = Generics.get_image_contours(wood_horizontal_splice_left)
+wood_horizontal_splice_left_vertices = []
+for contour in wood_horizontal_splice_left_contours:
+    for vertex in contour:
+        x, y = vertex[0]
+        wood_horizontal_splice_left_vertices.append((x, y))
 
-print("Plankie shape: ", plankie.shape)
+wood_horizontal_splice_right = wood[:,size//2:]
+wood_horizontal_splice_right_contours = Generics.get_image_contours(wood_horizontal_splice_right)
+wood_horizontal_splice_right_vertices = []
+for contour in wood_horizontal_splice_right_contours:
+    for vertex in contour:
+        x, y = vertex[0]
+        wood_horizontal_splice_right_vertices.append((x, y))
+
 #plankie = cv2.bitwise_not(plankie)
 #contours, hierarchy = cv2.findContours(plankie, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
 # shapes, really
 pymunk_objects = []
-def spawn_object(space1):
-    print("Spawning object")
-    circle_body = pymunk.Body(1, 100)
-    circle_shape = pymunk.Circle(circle_body, 20)
-    circle_shape.collision_type = collision_types["objects_player_1"]
-    space1.add(circle_body, circle_shape)
-    circle_body.position = (320, 240)  
-    pymunk_objects.append(circle_shape)
+def spawn_object(space1, object_type, collision_type=2, position=(0,0), previous_object=None):
+
+    if (object_type == object_types["wooden_plank"]):
+        print("Spawning Wooden plank on: ", position)
+        wood_body = pymunk.Body(1, 100)
+        wood_shape = pymunk.Poly(wood_body, wood_vertices)
+        wood_shape.collision_type = int(collision_type)
+        space1.add(wood_body, wood_shape)
+        wood_body.position = position
+        wood_shape.object_type = object_type
+        pymunk_objects.append(wood_shape)
+    elif (object_type == object_types["wooden_plank_broken"]):
+        wood_piece_1_body = pymunk.Body(1, 100)
+        wood_piece_1_shape = pymunk.Poly(wood_piece_1_body, wood_horizontal_splice_left_vertices)
+        wood_piece_1_shape.collision_type = 33
+        space1.add(wood_piece_1_body, wood_piece_1_shape)
+        wood_piece_1_body.position = previous_object.body.position 
+        wood_piece_1_shape.image = wood_horizontal_splice_left
+        wood_piece_1_shape.object_type = object_type
+        wood_piece_1_shape.image_side = "left"
+        wood_piece_1_body.apply_impulse_at_local_point((-100, 0))
+
+        wood_piece_2_body = pymunk.Body(1, 100)
+        wood_piece_2_shape = pymunk.Poly(wood_piece_2_body, wood_horizontal_splice_right_vertices)
+        wood_piece_2_shape.collision_type = 33
+        space1.add(wood_piece_2_body, wood_piece_2_shape)
+        wood_piece_2_body.position = previous_object.body.position 
+        wood_piece_2_shape.object_type = object_type
+        wood_piece_2_shape.image = wood_horizontal_splice_right
+        wood_piece_2_shape.image_side = "right"
+        wood_piece_2_body.apply_impulse_at_local_point((100, 0))
+        pymunk_objects.extend([wood_piece_1_shape,wood_piece_2_shape])
+
+        #wood_piece_1_body
+
 
 def process_hit(arbiter, space, data):
     # Get objects that were involved in collision
     print("__________________ COLISION __________________")
-
     print(f"{len(arbiter.shapes)} shapes collided:")
     kinematic_shapes = []
     for shape in arbiter.shapes:
@@ -83,27 +137,7 @@ def process_hit(arbiter, space, data):
             position = shape.body.position
             space.remove(shape, shape.body)
             pymunk_objects.remove(shape)
-            radius = shape.radius
-            body = pymunk.Body(1, 100)
-            body.position = (320, 240)
-
-            vertices = []
-            for contour in contours:
-                contour = np.squeeze(contour)
-                for point in contour:
-                    vertices.append((point[0], plankie.shape[0]-point[1]))
-
-
-            #vertices1 = [(0, 0), (0, radius), (-radius, radius), (-radius, 0)]
-            vertices2 = [(0, 0), (0, radius), (radius, radius), (radius, 0)]
-            poly1 = pymunk.Poly(body, vertices)
-            poly1.collision_type = collision_types["broken_objects"]
-            poly1.body.position = position
-            poly2 = pymunk.Poly(None, vertices2)
-            poly2.collision_type = collision_types["broken_objects"]
-
-            space.add(body,poly1)
-            pymunk_objects.extend([poly1])
+            spawn_object(space, object_types["wooden_plank_broken"], position, previous_object=shape)
 
 
     shape1, shape2 = arbiter.shapes
@@ -122,19 +156,34 @@ def out_of_bounds(arbiter, space, data):
     return True
 
 def draw_pymunk_object_in_opencv(image, pymunk_object): # for now only circles
-    print("Drawing ", pymunk_object," on: ", pymunk_object.body.position)
     if isinstance(pymunk_object, pymunk.Poly):
-        # Poly shapes are relative to the body position, so for opencv use add it as offset
-        vertices = [(v+pymunk_object.body.position) for v in pymunk_object.get_vertices()]
-        vertices = np.array(vertices, dtype=np.int32)
-        #cv2.fillPoly(image, [vertices], (255, 255, 255))
-        cv2.drawContours(image, contours, -1, 128, 2)
+        if (pymunk_object.object_type == object_types["wooden_plank"]):
+            vertices = [(v+pymunk_object.body.position) for v in pymunk_object.get_vertices()]
+            vertices = np.array(vertices, dtype=np.int32)
+            #cv2.fillPoly(image, [vertices], (255, 255, 255))
+            pos = pymunk_object.body.position
+            x, y = int(pos.x), int(pos.y)
+            #print("Drawing ", pymunk_object," on: ", pymunk_object.body.position)
+            image = Generics.overlayPNG(image, wood, [x,y] )
+        elif(pymunk_object.object_type == object_types["wooden_plank_broken"]):
+            # todo: maybe map all image objects predefined stuff and do lookups instead of IFs
+            vertices = [(v+pymunk_object.body.position) for v in pymunk_object.get_vertices()]
+            vertices = np.array(vertices, dtype=np.int32)
+            #cv2.fillPoly(image, [vertices], (255, 255, 255))
+            pos = pymunk_object.body.position
+            x, y = int(pos.x), int(pos.y)
+            #print("Drawing ", pymunk_object," on: ", pymunk_object.body.position)
+            if pymunk_object.image_side == "right":
+                x = int(x + wood.shape[1]//2)
+            image = Generics.overlayPNG(image, pymunk_object.image, [x,y] )
+
+
 
     else:
         pos = pymunk_object.body.position
         x, y = int(pos.x), int(pos.y)
         cv2.circle(image, (x, y), 25, (255, 255, 255), -1)
-
+    return image
 
 space = pymunk.Space()
 space.gravity = (0, 980)
@@ -167,17 +216,31 @@ line_right_hand_shape.collision_type = collision_type
 space.add(line_right_hand_body, line_right_hand_shape)
 line_right_hand_shape.player_limb = "right hand"
 
+
+line_left_leg_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
+line_left_leg_shape = pymunk.Poly(line_left_leg_body, [(-10000, 0), (1000, 0)])
+line_left_leg_shape.collision_type = collision_type
+space.add(line_left_leg_body, line_left_leg_shape)
+line_left_leg_shape.player_limb = "left leg"
+
+
+line_right_leg_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
+line_right_leg_shape = pymunk.Poly(line_right_leg_body, [(-10000, 0), (1000, 0)])
+line_right_leg_shape.collision_type = collision_type
+space.add(line_right_leg_body, line_right_leg_shape)
+line_right_leg_shape.player_limb = "right leg"
+
 background = cv2.imread("resources/dojo.png", cv2.IMREAD_UNCHANGED)
 background = cv2.cvtColor(background, cv2.COLOR_BGRA2RGBA)
 background = cv2.resize(background,(camera_width,camera_height))
 #original_background = cv2.flip(original_background,1)
-
+count = 0
 while cap.isOpened():    
     display_fps = cvFpsCalc.get()
     ret, frame = cap.read()
     if not ret:
       break
-
+    
     height, width, _ = frame.shape
     # if (number_of_players == 1):
     #     frame = frame[:,100:width-100, :] # singleplayer
@@ -193,8 +256,10 @@ while cap.isOpened():
 
     space.step(1/60)
     image = Generics.overlayPNG(image, background, pos=[0, 0])
-    for pymunk_object in pymunk_objects:
-        draw_pymunk_object_in_opencv(image, pymunk_object)
+    if(count ==0):
+        spawn_object(space, object_type=object_types["wooden_plank"], position=(540, 80))
+        count = 1
+    
     # image = Generics.overlayPNG(image,background, [0,0])
     
 
@@ -231,11 +296,14 @@ while cap.isOpened():
     #                cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA) 
     #cv2.line(image, (width // 2,0), (width // 2, height), (0,255,0), 2)
     image = Generics.overlayPNG(image, wood, pos=[woodX, woodY])
-    
+    for pymunk_object in pymunk_objects:
+        pymunk_object.body.angle+=0.023
+        image = draw_pymunk_object_in_opencv(image, pymunk_object)
     cv2.imshow('webcam', image)
     
     if cv2.waitKey(1) & 0xFF == ord('q'):
-        spawn_object(space)
+        spawn_object(space, object_type= object_types["wooden_plank"], position=(540, 80) )
+
 
 cap.release()
 cv2.destroyAllWindows()

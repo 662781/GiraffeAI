@@ -34,24 +34,37 @@ class Generics():
 
     @staticmethod
     def overlayPNG(imgBack, imgFront, pos=[0, 0]):
+        
         hf, wf, cf = imgFront.shape
         hb, wb, cb = imgBack.shape
+        if(pos[0] > wb or pos[1] > hb): # prevent out of bounds overlays  
+            #print("Image not in view")
+            return imgBack
         *_, mask = cv2.split(imgFront)
         maskBGRA = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGRA)
         maskBGR = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
         imgRGBA = cv2.bitwise_and(imgFront, maskBGRA)
         imgRGB = cv2.cvtColor(imgRGBA, cv2.COLOR_BGRA2BGR)
 
+        y1, y2 = max(0, pos[1]), min(hf + pos[1], hb)
+        x1, x2 = max(0, pos[0]), min(wf + pos[0], wb)
         imgMaskFull = np.zeros((hb, wb, cb), np.uint8)
-        imgMaskFull[pos[1]:hf + pos[1], pos[0]:wf + pos[0], :] = imgRGB
+        # Adjusted MaskFull and MaskFull2 to function even if image is partially out of bounds
+        imgMaskFull[y1:y2, x1:x2, :] = imgRGB[(y1-pos[1]):(y2-pos[1]), (x1-pos[0]):(x2-pos[0]), :]
         imgMaskFull2 = np.ones((hb, wb, cb), np.uint8) * 255
         maskBGRInv = cv2.bitwise_not(maskBGR)
-        imgMaskFull2[pos[1]:hf + pos[1], pos[0]:wf + pos[0], :] = maskBGRInv
+        imgMaskFull2[y1:y2, x1:x2, :] = maskBGRInv[(y1-pos[1]):(y2-pos[1]), (x1-pos[0]):(x2-pos[0]), :]
 
         imgBack = cv2.bitwise_and(imgBack, imgMaskFull2)
         imgBack = cv2.bitwise_or(imgBack, imgMaskFull)
-
         return imgBack
+
+    @staticmethod
+    def get_image_contours(image):
+        alpha_channel = image[:,:,3]
+        _, thresh = cv2.threshold(alpha_channel, 0, 255, cv2.THRESH_BINARY)
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        return contours
 
     @staticmethod
     def draw_stick_figure(image, keypoints):
