@@ -92,7 +92,7 @@ for contour in wood_horizontal_splice_right_contours:
 # shapes, really
 pymunk_objects = []
 def spawn_object(space1, object_type, collision_type=2, position=(0,0), previous_object=None):
-
+    
     if (object_type == object_types["wooden_plank"]):
         print("Spawning Wooden plank on: ", position)
         wood_body = pymunk.Body(1, 100)
@@ -102,10 +102,11 @@ def spawn_object(space1, object_type, collision_type=2, position=(0,0), previous
         wood_body.position = position
         wood_shape.object_type = object_type
         pymunk_objects.append(wood_shape)
+        print("Current amount of objects: ", len(pymunk_objects))
     elif (object_type == object_types["wooden_plank_broken"]):
         wood_piece_1_body = pymunk.Body(1, 100)
         wood_piece_1_shape = pymunk.Poly(wood_piece_1_body, wood_horizontal_splice_left_vertices)
-        wood_piece_1_shape.collision_type = 33
+        wood_piece_1_shape.collision_type = collision_types["broken_objects"]
         space1.add(wood_piece_1_body, wood_piece_1_shape)
         wood_piece_1_body.position = previous_object.body.position 
         wood_piece_1_shape.image = wood_horizontal_splice_left
@@ -115,7 +116,7 @@ def spawn_object(space1, object_type, collision_type=2, position=(0,0), previous
 
         wood_piece_2_body = pymunk.Body(1, 100)
         wood_piece_2_shape = pymunk.Poly(wood_piece_2_body, wood_horizontal_splice_right_vertices)
-        wood_piece_2_shape.collision_type = 33
+        wood_piece_2_shape.collision_type = collision_types["broken_objects"]
         space1.add(wood_piece_2_body, wood_piece_2_shape)
         wood_piece_2_body.position = previous_object.body.position 
         wood_piece_2_shape.object_type = object_type
@@ -143,6 +144,9 @@ def process_hit(arbiter, space, data):
     shape1, shape2 = arbiter.shapes
     body1, body2 = shape1.body, shape2.body
     print("Collision occurred between", body1, "and", body2, "on: ", body1.position)
+
+    random_x = random.randint(100, 600)
+    spawn_object(space, object_types["wooden_plank"], collision_type=2, position=(random_x,80), previous_object=None)
     #force = pymunk.Vec2d(5000,0)
     #body2.apply_force_at_local_point(force, (0, 0))
     return True
@@ -152,7 +156,7 @@ def out_of_bounds(arbiter, space, data):
     object_shape = arbiter.shapes[0]
     space.remove(object_shape, object_shape.body)
     pymunk_objects.remove(object_shape)
-    print("Circle ",arbiter.shapes[0] ," has left the screen!")
+    print("Shape ",arbiter.shapes[0] ," has left the screen!")
     return True
 
 def draw_pymunk_object_in_opencv(image, pymunk_object): # for now only circles
@@ -191,14 +195,17 @@ collision_type = 1
 handler = space.add_collision_handler(collision_types["limbs_player_1"], collision_types["objects_player_1"])
 handler.begin = process_hit
 
-#handler2 = space.add_collision_handler(4,99)
-#handler2.separate = out_of_bounds
+handler2 = space.add_collision_handler(collision_types["broken_objects"],collision_types["void"])
+handler2.separate = out_of_bounds
+
+handler3 = space.add_collision_handler(collision_types["objects_player_1"],collision_types["void"])
+handler3.separate = out_of_bounds
 
 left_segment = pymunk.Segment(space.static_body, (0, 0), (0, 580), 1)
 right_segment = pymunk.Segment(space.static_body, (640, 0), (640, 580), 1)
-bottom_segment = pymunk.Segment(space.static_body, (0, 380), (640, 380), 1) # below screen size for collision + removal effort
+bottom_segment = pymunk.Segment(space.static_body, (0, 380), (640, 800), 1) # below screen size for collision + removal effort
 bottom_segment.collision_type = 99 
-#bottom_segment.sensor = True
+bottom_segment.sensor = True
 top_segment = pymunk.Segment(space.static_body, (0, 0), (640, 0), 1)
 
 space.add(left_segment, right_segment, top_segment,bottom_segment)
@@ -272,11 +279,12 @@ while cap.isOpened():
             players[player_index].update_tracking(keypoints)
             get_trailing(players[player_index], image)
             Generics.draw_stick_figure(image, keypoints)
-
-            if(players[player_index].check_hit(image, woodLine)):
-                woodX=random.randint(100, width-110)
-                woodY=random.randint(100, 300)
-                woodLine = Polygon([(woodX, woodY), (woodX, woodY+size),(woodX +size, woodY), (woodX +size, woodY +size)])
+            players[player_index].reset_keypoints()
+            # end of an era
+            # if(players[player_index].check_hit(image, woodLine)):
+            #     woodX=random.randint(100, width-110)
+            #     woodY=random.randint(100, 300)
+            #     woodLine = Polygon([(woodX, woodY), (woodX, woodY+size),(woodX +size, woodY), (woodX +size, woodY +size)])
                  
     except Exception:
         traceback.print_exc()
@@ -295,7 +303,9 @@ while cap.isOpened():
     # cv2.putText(image, current_player, (int(camera_width/2 -20), 30),
     #                cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA) 
     #cv2.line(image, (width // 2,0), (width // 2, height), (0,255,0), 2)
-    image = Generics.overlayPNG(image, wood, pos=[woodX, woodY])
+    
+    # end of an era, you have done well
+    #image = Generics.overlayPNG(image, wood, pos=[woodX, woodY])
     for pymunk_object in pymunk_objects:
         pymunk_object.body.angle+=0.023
         image = draw_pymunk_object_in_opencv(image, pymunk_object)

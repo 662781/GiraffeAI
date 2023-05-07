@@ -136,7 +136,9 @@ class CVNinjaPlayer:
             self.left_foot_track_points = []
             self.left_foot_track_lengths = []
             return True
-
+        return False
+    
+    def reset_keypoints(self):
         self.left_hand_track_points = self.left_hand_track_points[-2:]
         self.left_hand_track_lengths = self.left_hand_track_lengths [-2:]
 
@@ -148,4 +150,3 @@ class CVNinjaPlayer:
 
         self.left_foot_track_points = self.left_foot_track_points[-2:]
         self.left_foot_track_lengths = self.left_foot_track_lengths[-2:]
-        return False
