@@ -20,9 +20,9 @@ players = []
 number_of_jabs = 0
 number_of_hooks = 0
 number_of_uppercuts = 0
-min_visiblity = 0.7
+min_visiblity = 0.5
 
-stage = {"jab": "reset", "hook": "reset", "uppercut": "reset"}
+stage = {"jab": "default", "hook": "default", "uppercut": "default"}
 
 
 class Player:
@@ -61,7 +61,7 @@ def moving_average(points, n):
 
     return int(sum_x / n), int(sum_y / n)
 
-# Calculate the direction of the last n points
+
 def get_direction(player, n):
     # Return 0, 0 if not enough points are available
     if len(player.left_hand_track_points) < 2:
@@ -75,41 +75,49 @@ def get_direction(player, n):
     dx = current_avg[0] - prev_avg[0]
     dy = current_avg[1] - prev_avg[1]
 
-    #dx is the change in x direction and dy is the change in y direction
+    # dx is the change in x direction and dy is the change in y direction
     return dx, dy
 
 
 def detect_punch(player, angle, stage, left_wrist_visibility, left_elbow_visibility):
-    dx, dy = get_direction(player, 5)  # Calculate the direction based on the last 5 points
+    dx, dy = get_direction(player, 3)  # Calculate the direction based on the last 5 points
 
-    # Detect jab
-    if angle > 120 and stage[
-        "jab"] == "reset" and left_wrist_visibility > min_visiblity and left_elbow_visibility > min_visiblity and abs(
-        dy) > abs(dx):
-        stage["jab"] = "stretched"
-    if angle < 20 and stage["jab"] == "stretched":
-        stage["jab"] = "reset"
-        player.score["jab"] += 1
-
-    # Detect hook
-    if 60 < angle < 130 and stage[
-        "hook"] == "reset" and left_wrist_visibility > min_visiblity and left_elbow_visibility > min_visiblity and abs(
-        dx) > abs(dy):
-        stage["hook"] = "hook angle"
-    if angle < 60 and stage["hook"] == "hook angle":
-        stage["hook"] = "reset"
-        player.score["hook"] += 1
-
-        # Detect uppercut
-    if angle > 150 and stage[
-        "uppercut"] == "reset" and left_wrist_visibility > min_visiblity and left_elbow_visibility > min_visiblity and dy > abs(
-        dx):
-        stage["uppercut"] = "stretched"
-    if angle < 90 and stage["uppercut"] == "stretched":
-        stage["uppercut"] = "reset"
-        player.score["uppercut"] += 1
+    if left_wrist_visibility > min_visiblity and left_elbow_visibility > min_visiblity:
+        detect_jab(angle, dx, dy, left_elbow_visibility, left_wrist_visibility, player, stage)
+        detect_hook(angle, dx, dy, left_elbow_visibility, left_wrist_visibility, player, stage)
+        detect_uppercut(angle, dx, dy, left_elbow_visibility, left_wrist_visibility, player, stage)
 
     return stage
+
+
+def detect_uppercut(angle, dx, dy, player, stage):
+    # Check if the angle is between 90 and 150 degrees, and the stage is in the default state
+    if 30 < angle < 150 and stage["uppercut"] == "default":
+        # Check if the fist is moving from bottom to top (dy < 0)
+        if dy < 0:
+            stage["uppercut"] = "uppercut"  # Set the stage to uppercut
+    # Check if the angle is less than 90 degrees and the stage is in the uppercut state
+    elif stage["uppercut"] == "uppercut":
+        stage["uppercut"] = "default"  # Reset the stage to default
+        player.score["uppercut"] += 1  # Increment the uppercut score by 1
+
+
+def detect_hook(angle, dx, dy, player, stage):
+    if 60 < angle < 130 and stage[
+        "hook"] == "reset" and abs(dx) < abs(dy):
+        stage["hook"] = "hook"
+    if angle < 60 and stage["hook"] == "hook":
+        stage["hook"] = "default"
+        player.score["hook"] += 1
+
+
+def detect_jab(angle, dx, dy, player, stage):
+    if angle > 120 and stage[
+        "jab"] == "reset" and abs(dy) < abs(dx):
+        stage["jab"] = "default"
+    if angle < 20 and stage["jab"] == "default":
+        stage["jab"] = "default"
+        player.score["jab"] += 1
 
 
 def calculate_angle(first_point, mid_point, end_point):
@@ -153,6 +161,7 @@ def track_left_hand(player, landmarks, width, height):
         player.left_hand_track_current += distance_left_hand
         player.left_hand_track_previous_point = cx_left, cy_left
 
+
 def draw_on_frame(image, angle, left_elbow_xy, number_of_jabs, results, dx, dy):
     cv2.putText(image, str(angle), tuple(np.multiply(left_elbow_xy, [640, 480]).astype(int)),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2, cv2.LINE_AA)
@@ -162,7 +171,6 @@ def draw_on_frame(image, angle, left_elbow_xy, number_of_jabs, results, dx, dy):
     cv2.putText(image, f"dx: {dx:.2f}, dy: {dy:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2,
                 cv2.LINE_AA)
     # Convert the image back to BGR for display
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
     # Draw the landmarks on the image
     mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,
