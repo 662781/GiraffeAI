@@ -22,6 +22,9 @@ number_of_hooks = 0
 number_of_uppercuts = 0
 min_visiblity = 0.5
 
+cooldown_duration = 1  # Cooldown duration in seconds
+last_punch_time = 0  # Variable to store the timestamp of the last detected punch
+
 stage = {"jab": "default", "hook": "default", "uppercut": "default"}
 
 
@@ -80,42 +83,38 @@ def get_direction(player, n):
 
 
 def detect_punch(player, angle, stage, left_wrist_visibility, left_elbow_visibility):
+    global last_punch_time
+
     dx, dy = get_direction(player, 3)  # Calculate the direction based on the last 5 points
 
-    if left_wrist_visibility > min_visiblity and left_elbow_visibility > min_visiblity:
-        detect_jab(angle, dx, dy, player, stage)
-        detect_hook(angle, dx, dy, player, stage)
-        detect_uppercut(angle, dx, dy, player, stage)
+    if time.time() - last_punch_time >= cooldown_duration:
+        if left_wrist_visibility > min_visiblity and left_elbow_visibility > min_visiblity:
+            detect_jab(angle, dx, dy, player, stage)
+            detect_uppercut(angle, dx, dy, player, stage)
+            detect_hook(angle, dx, dy, player, stage)
+
+            # Update the last punch time
+            last_punch_time = time.time()
 
     return stage
 
 
 def detect_uppercut(angle, dx, dy, player, stage):
     # Check if the angle is between 90 and 150 degrees, and the stage is in the default state
-    if 30 < angle < 150 and stage["uppercut"] == "default":
-        # Check if the fist is moving from bottom to top (dy < 0)
-        if dy < 0:
-            stage["uppercut"] = "uppercut"  # Set the stage to uppercut
-    # Check if the angle is less than 90 degrees and the stage is in the uppercut state
-    elif stage["uppercut"] == "uppercut":
-        stage["uppercut"] = "default"  # Reset the stage to default
+    if 30 < angle < 150 and dy < 0:
+        print("uppercut")
         player.score["uppercut"] += 1  # Increment the uppercut score by 1
 
 
 def detect_hook(angle, dx, dy, player, stage):
-    if 60 < angle < 130 and stage[
-        "hook"] == "reset" and abs(dx) < abs(dy):
-        stage["hook"] = "hook"
-    if angle < 60 and stage["hook"] == "hook":
-        stage["hook"] = "default"
+    if 60 < angle < 120 and abs(dx) ** 2 > abs(dy) ** 2:
+        print("hook")
         player.score["hook"] += 1
 
 
 def detect_jab(angle, dx, dy, player, stage):
-    if angle > 120 and stage[
-        "jab"] == "reset" and abs(dy) < abs(dx):
-        stage["jab"] = "default"
-    if angle < 20 and stage["jab"] == "default":
+    if angle > 110 and abs(dy) ** 2 < abs(dx) ** 2:
+        print("jab")
         stage["jab"] = "default"
         player.score["jab"] += 1
 
@@ -230,7 +229,6 @@ def main_loop():
                 # Update the stage and punch counters for each player
                 stage = detect_punch(player, angle, stage, left_wrist_visibility,
                                      left_elbow_visibility)
-
 
             wrist_dx, wrist_dy = get_direction(player, 5)
             draw_on_frame(image, angle, left_elbow_xy, number_of_jabs, results, dx=wrist_dx, dy=wrist_dy)
