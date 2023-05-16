@@ -83,9 +83,9 @@ def detect_punch(player, angle, stage, left_wrist_visibility, left_elbow_visibil
     dx, dy = get_direction(player, 3)  # Calculate the direction based on the last 5 points
 
     if left_wrist_visibility > min_visiblity and left_elbow_visibility > min_visiblity:
-        detect_jab(angle, dx, dy, left_elbow_visibility, left_wrist_visibility, player, stage)
-        detect_hook(angle, dx, dy, left_elbow_visibility, left_wrist_visibility, player, stage)
-        detect_uppercut(angle, dx, dy, left_elbow_visibility, left_wrist_visibility, player, stage)
+        detect_jab(angle, dx, dy, player, stage)
+        detect_hook(angle, dx, dy, player, stage)
+        detect_uppercut(angle, dx, dy, player, stage)
 
     return stage
 
@@ -170,7 +170,6 @@ def draw_on_frame(image, angle, left_elbow_xy, number_of_jabs, results, dx, dy):
     cv2.putText(image, str(int(number_of_jabs)), (10, 70), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
     cv2.putText(image, f"dx: {dx:.2f}, dy: {dy:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2,
                 cv2.LINE_AA)
-    # Convert the image back to BGR for display
 
     # Draw the landmarks on the image
     mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,
@@ -232,8 +231,7 @@ def main_loop():
                 stage = detect_punch(player, angle, stage, left_wrist_visibility,
                                      left_elbow_visibility)
 
-            # Draw on the frame
-            # In the main_loop function
+
             wrist_dx, wrist_dy = get_direction(player, 5)
             draw_on_frame(image, angle, left_elbow_xy, number_of_jabs, results, dx=wrist_dx, dy=wrist_dy)
 
