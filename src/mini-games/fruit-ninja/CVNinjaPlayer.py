@@ -7,13 +7,12 @@ import pymunk
 
 class CVNinjaPlayer:
 
-    def __init__(self):
+    def __init__(self, collision_type):
         score = 0
         spawn_time = time.time()
 
-        # Create pymunk 
-
-
+        # Create pymunk shapes 
+        self._setup_shapes(collision_type)
         # Init tracking
         self.left_hand_track_points = []
         self.left_hand_track_lengths = []
@@ -34,6 +33,30 @@ class CVNinjaPlayer:
         self.left_foot_track_lengths = []
         self.left_foot_track_current = 0
         self.left_foot_track_previous_point = 0,0
+
+    def _setup_shapes(self, collision_type):
+        # Initialize the shapes used in the background for collision. 
+        self.line_left_hand_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
+        self.line_left_hand_shape = pymunk.Poly(self.line_left_hand_body, [(-100, 0), (100, 0)])
+        self.line_left_hand_shape.collision_type = collision_type
+        self.line_left_hand_shape.player_limb = "left hand"
+
+        self.line_right_hand_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
+        self.line_right_hand_shape = pymunk.Poly(self.line_right_hand_body, [(-1000, 0), (1000, 0)])
+        self.line_right_hand_shape.collision_type = collision_type
+        self.line_right_hand_shape.player_limb = "right hand"
+
+        # Left leg 
+        self.line_left_leg_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
+        self.line_left_leg_shape = pymunk.Poly(self.line_left_leg_body, [(-10000, 0), (1000, 0)])
+        self.line_left_leg_shape.collision_type = collision_type
+        self.line_left_leg_shape.player_limb = "left leg"
+
+
+        self.line_right_leg_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
+        self.line_right_leg_shape = pymunk.Poly(self.line_right_leg_body, [(-10000, 0), (1000, 0)])
+        self.line_right_leg_shape.collision_type = collision_type
+        self.line_right_leg_shape.player_limb = "right leg"
 
     def update_tracking(self, keypoints):
         right_wrist = (int(keypoints[9][0]), int(keypoints[9][1]))

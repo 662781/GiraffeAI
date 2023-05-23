@@ -24,12 +24,19 @@ object_types = {
     "rock_broken":4,
 }
 
-yolo_model = YOLO('yolov8m-pose.pt')  # load an official model
+yolo_model = YOLO('yolov8l-pose.pt')  # load an official model
 number_of_players = 1 # todo: argument
 
+space = pymunk.Space()
+space.gravity = (0, 980)
 players = []
 for i in range(number_of_players):
-    players.append(CVNinjaPlayer())
+    player = CVNinjaPlayer(collision_types["limbs_player_" + str(i+1)])
+    space.add(player.line_left_hand_body, player.line_left_hand_shape)
+    space.add(player.line_right_hand_body, player.line_right_hand_shape)
+    space.add(player.line_left_leg_body, player.line_left_leg_shape)
+    space.add(player.line_right_leg_body, player.line_right_leg_shape)
+    players.append(player)
 
 
 camera_width = 640
@@ -37,11 +44,12 @@ camera_height = 480
 
 def get_trailing(player, image):
 
-    line_left_leg_shape.unsafe_set_vertices([(player.left_foot_track_points[-1]), (player.left_foot_track_points[0])])
-    line_right_leg_shape.unsafe_set_vertices([(player.right_foot_track_points[-1]), (player.right_foot_track_points[0])])
-    line_left_hand_shape.unsafe_set_vertices([(player.left_hand_track_points[-1]),(player.left_hand_track_points[0])])
-    line_right_hand_shape.unsafe_set_vertices([(player.right_hand_track_points[-1]),(player.right_hand_track_points[0])])
-    #hand_circle_body.velocity = (1000, 0)
+    # method is considered "unsafe" due to potential physics issues, not a problem with for my use case (collision detection). 
+    player.line_left_leg_shape.unsafe_set_vertices([(player.left_foot_track_points[-1]), (player.left_foot_track_points[0])])
+    player.line_right_leg_shape.unsafe_set_vertices([(player.right_foot_track_points[-1]), (player.right_foot_track_points[0])])
+    player.line_left_hand_shape.unsafe_set_vertices([(player.left_hand_track_points[-1]),(player.left_hand_track_points[0])])
+    player.line_right_hand_shape.unsafe_set_vertices([(player.right_hand_track_points[-1]),(player.right_hand_track_points[0])])
+
     cv2.line(image, player.left_hand_track_points[-1], player.left_hand_track_points[0], (0,0,255),5)
     cv2.line(image, player.right_hand_track_points[-1], player.right_hand_track_points[0], (0,0,255),5)
     cv2.line(image, player.right_foot_track_points[-1], player.right_foot_track_points[0], (0,0,255),5)
@@ -56,39 +64,47 @@ cv2.setWindowProperty("webcam", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 cvFpsCalc = CvFpsCalc(buffer_len=10)
 current_player = "none"
 
+def prepareImage(image, size):
+    image = cv2.resize(image, (size, size), interpolation=cv2.INTER_LINEAR)
+    vertices = Generics.get_vertices_by_image(image)
+    image_horizontal_splice_left =  image[:,:size//2]
+    image_horizontal_splice_left_vertices = Generics.get_vertices_by_image(image_horizontal_splice_left)
+    image_horizontal_splice_right = wood[:,size//2:]
+    image_horizontal_splice_right_vertices = Generics.get_vertices_by_image(image_horizontal_splice_right)
+
+
 wood = cv2.imread('resources/plank.png', cv2.IMREAD_UNCHANGED)
-size = 50
+stone = cv2.imread('resources/rock.png', cv2.IMREAD_UNCHANGED)
+bomb = cv2.imread('resources/bomb.png', cv2.IMREAD_UNCHANGED)
+
+size = 70
 wood = cv2.resize(wood, (size, size), interpolation=cv2.INTER_LINEAR)
+stone = cv2.resize(stone, (size, size), interpolation=cv2.INTER_LINEAR)
+bomb = cv2.resize(bomb, (size, size), interpolation=cv2.INTER_LINEAR)
 
-woodX=random.randint(100, camera_width-110)
-woodY=random.randint(100, 300)
-woodLine = Polygon([(woodX, woodY), (woodX, woodY+size),(woodX +size, woodY), (woodX +size, woodY +size)  ])
+# woodX=random.randint(100, camera_width-110)
+# woodY=random.randint(100, 300)
+# woodLine = Polygon([(woodX, woodY), (woodX, woodY+size),(woodX +size, woodY), (woodX +size, woodY +size)  ])
 
-wood_contours = Generics.get_image_contours(wood)
-wood_vertices = []
-for contour in wood_contours:
-    for vertex in contour:
-        x, y = vertex[0]
-        wood_vertices.append((x, y))
+wood_vertices = Generics.get_vertices_by_image(wood)
+stone_vertices = Generics.get_vertices_by_image(stone)
+bomb_vertices = Generics.get_vertices_by_image(bomb)
+
+
+wood_horizontal_splice_left = np.zeros_like(wood, dtype=np.uint8)
+wood_horizontal_splice_right = np.zeros_like(wood, dtype=np.uint8)
+for i in range(size):
+    wood_horizontal_splice_right[i, :size-i] = wood[i, :size-i]
+    wood_horizontal_splice_left[i, size-i:] = wood[i, size-i:]
+
 wood_horizontal_splice_left =  wood[:,:size//2]
-wood_horizontal_splice_left_contours = Generics.get_image_contours(wood_horizontal_splice_left)
-wood_horizontal_splice_left_vertices = []
-for contour in wood_horizontal_splice_left_contours:
-    for vertex in contour:
-        x, y = vertex[0]
-        wood_horizontal_splice_left_vertices.append((x, y))
+wood_horizontal_splice_left_vertices = Generics.get_vertices_by_image(wood_horizontal_splice_left)
+
 
 wood_horizontal_splice_right = wood[:,size//2:]
-wood_horizontal_splice_right_contours = Generics.get_image_contours(wood_horizontal_splice_right)
-wood_horizontal_splice_right_vertices = []
-for contour in wood_horizontal_splice_right_contours:
-    for vertex in contour:
-        x, y = vertex[0]
-        wood_horizontal_splice_right_vertices.append((x, y))
+wood_horizontal_splice_right_vertices = Generics.get_vertices_by_image(wood_horizontal_splice_right)
 
-#plankie = cv2.bitwise_not(plankie)
-#contours, hierarchy = cv2.findContours(plankie, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
+random_objects = [wood, stone, bomb]
 # shapes, really
 pymunk_objects = []
 def spawn_object(space1, object_type, collision_type=2, position=(0,0), previous_object=None):
@@ -125,9 +141,6 @@ def spawn_object(space1, object_type, collision_type=2, position=(0,0), previous
         wood_piece_2_body.apply_impulse_at_local_point((100, 0))
         pymunk_objects.extend([wood_piece_1_shape,wood_piece_2_shape])
 
-        #wood_piece_1_body
-
-
 def process_hit(arbiter, space, data):
     # Get objects that were involved in collision
     print("__________________ COLISION __________________")
@@ -143,7 +156,9 @@ def process_hit(arbiter, space, data):
 
     shape1, shape2 = arbiter.shapes
     body1, body2 = shape1.body, shape2.body
-    print("Collision occurred between", body1, "and", body2, "on: ", body1.position)
+    print("Collision occurred between", body1, "and", body2)
+    print("Wood location: ", body2.position  )
+    
 
     random_x = random.randint(100, 600)
     spawn_object(space, object_types["wooden_plank"], collision_type=2, position=(random_x,80), previous_object=None)
@@ -159,7 +174,7 @@ def out_of_bounds(arbiter, space, data):
     print("Shape ",arbiter.shapes[0] ," has left the screen!")
     return True
 
-def draw_pymunk_object_in_opencv(image, pymunk_object): # for now only circles
+def draw_pymunk_object_in_opencv(image, pymunk_object): 
     if isinstance(pymunk_object, pymunk.Poly):
         if (pymunk_object.object_type == object_types["wooden_plank"]):
             vertices = [(v+pymunk_object.body.position) for v in pymunk_object.get_vertices()]
@@ -189,8 +204,7 @@ def draw_pymunk_object_in_opencv(image, pymunk_object): # for now only circles
         cv2.circle(image, (x, y), 25, (255, 255, 255), -1)
     return image
 
-space = pymunk.Space()
-space.gravity = (0, 980)
+
 collision_type = 1
 handler = space.add_collision_handler(collision_types["limbs_player_1"], collision_types["objects_player_1"])
 handler.begin = process_hit
@@ -209,33 +223,6 @@ bottom_segment.sensor = True
 top_segment = pymunk.Segment(space.static_body, (0, 0), (640, 0), 1)
 
 space.add(left_segment, right_segment, top_segment,bottom_segment)
-
-
-line_left_hand_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
-line_left_hand_shape = pymunk.Poly(line_left_hand_body, [(-100, 0), (100, 0)])
-line_left_hand_shape.collision_type = collision_type
-space.add(line_left_hand_body, line_left_hand_shape)
-line_left_hand_shape.player_limb = "left hand"
-
-line_right_hand_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
-line_right_hand_shape = pymunk.Poly(line_right_hand_body, [(-1000, 0), (1000, 0)])
-line_right_hand_shape.collision_type = collision_type
-space.add(line_right_hand_body, line_right_hand_shape)
-line_right_hand_shape.player_limb = "right hand"
-
-
-line_left_leg_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
-line_left_leg_shape = pymunk.Poly(line_left_leg_body, [(-10000, 0), (1000, 0)])
-line_left_leg_shape.collision_type = collision_type
-space.add(line_left_leg_body, line_left_leg_shape)
-line_left_leg_shape.player_limb = "left leg"
-
-
-line_right_leg_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
-line_right_leg_shape = pymunk.Poly(line_right_leg_body, [(-10000, 0), (1000, 0)])
-line_right_leg_shape.collision_type = collision_type
-space.add(line_right_leg_body, line_right_leg_shape)
-line_right_leg_shape.player_limb = "right leg"
 
 background = cv2.imread("resources/dojo.png", cv2.IMREAD_UNCHANGED)
 background = cv2.cvtColor(background, cv2.COLOR_BGRA2RGBA)
@@ -304,8 +291,6 @@ while cap.isOpened():
     #                cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA) 
     #cv2.line(image, (width // 2,0), (width // 2, height), (0,255,0), 2)
     
-    # end of an era, you have done well
-    #image = Generics.overlayPNG(image, wood, pos=[woodX, woodY])
     for pymunk_object in pymunk_objects:
         pymunk_object.body.angle+=0.023
         image = draw_pymunk_object_in_opencv(image, pymunk_object)

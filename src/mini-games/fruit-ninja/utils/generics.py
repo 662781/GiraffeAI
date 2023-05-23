@@ -60,11 +60,17 @@ class Generics():
         return imgBack
 
     @staticmethod
-    def get_image_contours(image):
+    def get_vertices_by_image(image):
+        # Given an image, determine the contours and add those contour coordinates as vertices
+        vertices = []
         alpha_channel = image[:,:,3]
-        _, thresh = cv2.threshold(alpha_channel, 0, 255, cv2.THRESH_BINARY)
-        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        return contours
+        _, threshold = cv2.threshold(alpha_channel, 0, 255, cv2.THRESH_BINARY)
+        contours, _ = cv2.findContours(threshold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        for contour in contours:
+            for vertex in contour:
+                x, y = vertex[0]
+                vertices.append((x, y))
+        return vertices
 
     @staticmethod
     def draw_stick_figure(image, keypoints):
