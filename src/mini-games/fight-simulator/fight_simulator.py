@@ -85,13 +85,13 @@ def get_direction(player, n):
 def detect_punch(player, angle, stage, left_wrist_visibility, left_elbow_visibility):
     global last_punch_time
 
-    dx, dy = get_direction(player, 3)  # Calculate the direction based on the last 5 points
+    dx, dy = get_direction(player, 2)  # Calculate the direction based on the last 2 points
 
     if time.time() - last_punch_time >= cooldown_duration:
         if left_wrist_visibility > min_visiblity and left_elbow_visibility > min_visiblity:
-            detect_jab(angle, dx, dy, player, stage)
-            detect_uppercut(angle, dx, dy, player, stage)
-            detect_hook(angle, dx, dy, player, stage)
+            detect_jab(angle, dx, dy, player)
+            detect_uppercut(angle, dy, player)
+            detect_hook(angle, dx, dy, player)
 
             # Update the last punch time
             last_punch_time = time.time()
@@ -99,23 +99,40 @@ def detect_punch(player, angle, stage, left_wrist_visibility, left_elbow_visibil
     return stage
 
 
-def detect_uppercut(angle, dx, dy, player, stage):
-    # Check if the angle is between 90 and 150 degrees, and the stage is in the default state
+uppercut_timer = 0  # Variable to track the duration of the correct angle for uppercut
+
+
+def detect_uppercut(angle, dy, player):
+    global uppercut_timer
+
     if 30 < angle < 150 and dy < 0:
-        print("uppercut")
-        player.score["uppercut"] += 1  # Increment the uppercut score by 1
+        if uppercut_timer >= 0.5:
+            print("uppercut")
+            player.score["uppercut"] += 1
+        else:
+            uppercut_timer += time.time() - uppercut_timer
+    else:
+        uppercut_timer = 0
 
 
-def detect_hook(angle, dx, dy, player, stage):
-    if 60 < angle < 120 and abs(dx) ** 2 > abs(dy) ** 2:
-        print("hook")
-        player.score["hook"] += 1
+# Variable to track the duration of the correct angle for hook
+
+def detect_hook(angle, dx, dy, player):
+    global hook_timer
+
+    if 60 < angle < 160 and abs(dx) ** 2 > abs(dy) ** 2:
+        if hook_timer >= 0.1:
+            print("hook")
+            player.score["hook"] += 1
+        else:
+            hook_timer += time.time() - hook_timer
+    else:
+        hook_timer = 0
 
 
-def detect_jab(angle, dx, dy, player, stage):
+def detect_jab(angle, dx, dy, player):
     if angle > 110 and abs(dy) ** 2 < abs(dx) ** 2:
         print("jab")
-        stage["jab"] = "default"
         player.score["jab"] += 1
 
 
