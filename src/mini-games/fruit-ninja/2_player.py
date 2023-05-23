@@ -64,14 +64,6 @@ cv2.setWindowProperty("webcam", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 cvFpsCalc = CvFpsCalc(buffer_len=10)
 current_player = "none"
 
-def prepareImage(image, size):
-    image = cv2.resize(image, (size, size), interpolation=cv2.INTER_LINEAR)
-    vertices = Generics.get_vertices_by_image(image)
-    image_horizontal_splice_left =  image[:,:size//2]
-    image_horizontal_splice_left_vertices = Generics.get_vertices_by_image(image_horizontal_splice_left)
-    image_horizontal_splice_right = wood[:,size//2:]
-    image_horizontal_splice_right_vertices = Generics.get_vertices_by_image(image_horizontal_splice_right)
-
 
 wood = cv2.imread('resources/plank.png', cv2.IMREAD_UNCHANGED)
 stone = cv2.imread('resources/rock.png', cv2.IMREAD_UNCHANGED)
@@ -179,7 +171,7 @@ def draw_pymunk_object_in_opencv(image, pymunk_object):
         if (pymunk_object.object_type == object_types["wooden_plank"]):
             vertices = [(v+pymunk_object.body.position) for v in pymunk_object.get_vertices()]
             vertices = np.array(vertices, dtype=np.int32)
-            #cv2.fillPoly(image, [vertices], (255, 255, 255))
+            #cv2.fillPoly(image, [vertices], (255, 255, 255)) # A check to see if the polyshape is similar. 
             pos = pymunk_object.body.position
             x, y = int(pos.x), int(pos.y)
             #print("Drawing ", pymunk_object," on: ", pymunk_object.body.position)

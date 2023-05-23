@@ -26,7 +26,7 @@ class Generics():
         keypoint_x = keypoint1[0] - ((keypoint2[0] - keypoint1[0]) / 2) # divide by two to avoid overreach
         line_func = Generics._create_line_function(keypoint2, keypoint1)
         keypoint_y = line_func(keypoint_x)
-        if(keypoint_y is None): # on infinite slope, take an y relative to the other y coords 
+        if(keypoint_y is None): # on infinite slope, take a y relative to the other y coords 
             keypoint_y = keypoint1[1] - ((keypoint2[1] - keypoint1[1]) / 2)
 
         new_keypoint = (int(keypoint_x), int(keypoint_y)) # coordinates are only useful as rounded integers

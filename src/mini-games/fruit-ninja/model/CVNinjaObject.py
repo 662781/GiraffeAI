@@ -5,26 +5,28 @@ from utils import Generics
 
 
 class CVNinjaObject(ABC):
-
-    pymunk_objects =  []  # Denoted as tuple: (image, body_object)
+    pymunk_objects_to_spawn = [] # list of items that need to be drawn on frame for the object. Denoted as assoc array: {image:, shape:}
+    pymunk_objects_broken =  []  # list of parts of the object, each item denoted as "key": (image,shape)
     vertices = {}
-    def __init__(self, image_path: str, size: int, object_state: CVNinjaObjectState )
-        self._setup(image_path, size)
-        self.object_state = object_state
-
-    def _setup(self, image_path, size):
-        self.image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
-        self.image = cv2.resize(self.image, (size, size), interpolation=cv2.INTER_LINEAR)
+    def __init__(self, image, size: int)
         self.size = size # for now width and height will be the same
-        self._insert_vertices()
+        self.image = cv2.resize(image, (self.size, self.size), interpolation=cv2.INTER_LINEAR)
+        # Set the "whole" object as standard object to spawn
         body = pymunk.Body(1, 100)
-        shape = pymunk.Poly(body, self.vertices["whole"])
-        pymunk_objects.append((self.image, shape))
-
-    def _insert_vertices(self):
-        self.vertices.append("whole": Generics.get_vertices_by_image(self.image))
+        shape = pymunk.Poly(body, Generics.get_vertices_by_image(self.image))
+        shape.parent_object = self # For retrieval during collision
+        self._append_object_to_spawn.append(self.image, shape)
 
     @abstractmethod
-    def collision_aftermath(self, contact_point):
+    def _define_objects(self):
+        # Define the unique object pieces for each Object
+        pass
+
+    def _append_object_to_spawn(self, image, shape):
+        # made just so I don't have to type the stupid assoc key value everytime, maybe I'll change it some day
+        self.pymunk_objects_to_spawn.append({"image": image, "shape": shape}) 
+
+    @abstractmethod
+    def collision_aftermath(self, space, contact_point):
         # Used to handle interactions specific to objects (wood is cut, rock is crushed, bomb explodes)
         pass
