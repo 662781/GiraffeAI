@@ -20,6 +20,8 @@ min_visiblity = 0.5
 
 cooldown_duration = 1  # Cooldown duration in seconds
 last_punch_time = 0  # Variable to store the timestamp of the last detected punch
+uppercut_timer = 0
+hook_timer = 0
 
 
 class Player:
@@ -27,6 +29,12 @@ class Player:
     left_hand_track_lengths = []
     left_hand_track_current = 0
     left_hand_track_previous_point = 0, 0
+
+    score = {
+        "jab": 0,
+        "uppercut": 0,
+        "hook": 0
+    }
 
     spawn_time = time.time()
 
@@ -41,75 +49,35 @@ def get_moving_average(points, number_of_last_points):
     return int(sum_x / number_of_last_points), int(sum_y / number_of_last_points)
 
 
-def get_direction(player, n):
-    # Return 0, 0 if not enough points are available
+def get_direction(player, number_of_points_to_track):
     if len(player.left_hand_track_points) < 2:
         return 0, 0  # Return 0, 0 if not enough points are available
-    # Calculate the moving average of the last n points
-    current_avg = get_moving_average(points=player.left_hand_track_points, number_of_last_points=n)
-    # Calculate the moving average of the previous n points
-    prev_avg = get_moving_average(points=player.left_hand_track_points[:-1], number_of_last_points=n)
 
-    # Calculate the direction
+    current_avg = get_moving_average(points=player.left_hand_track_points,
+                                     number_of_last_points=number_of_points_to_track)
+    prev_avg = get_moving_average(points=player.left_hand_track_points[:-1],
+                                  number_of_last_points=number_of_points_to_track)
     dx = current_avg[0] - prev_avg[0]
     dy = current_avg[1] - prev_avg[1]
 
-    # dx is the change in x direction and dy is the change in y direction
     return dx, dy
 
 
-def detect_punch(player, angle, stage, left_wrist_visibility, left_elbow_visibility):
-    global last_punch_time
+def track_left_hand(player, landmarks, width, height):
+    min_detection_accuracy = 0.8
+    left_index = landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value]
+    cx_left, cy_left = int(left_index.x * width), int(left_index.y * height)
+    detection_accuracy = left_index.visibility
 
-    dx, dy = get_direction(player, 2)  # Calculate the direction based on the last 2 points
+    if detection_accuracy > min_detection_accuracy:
+        px_left, py_left = player.left_hand_track_previous_point
+        distance_left_hand = math.hypot(cx_left - px_left, cy_left - py_left)
 
-    if time.time() - last_punch_time >= cooldown_duration:
-        if left_wrist_visibility > min_visiblity and left_elbow_visibility > min_visiblity:
-            detect_jab(angle, dx, dy, player)
-            detect_uppercut(angle, dy, player)
-            detect_hook(angle, dx, dy, player)
-
-            # Update the last punch time
-            last_punch_time = time.time()
-
-    return stage
-
-
-uppercut_timer = 0  # Variable to track the duration of the correct angle for uppercut
-
-
-def detect_uppercut(angle, dy, player):
-    global uppercut_timer
-
-    if 30 < angle < 150 and dy < 0:
-        if uppercut_timer >= 0.5:
-            print("uppercut")
-            player.score["uppercut"] += 1
-        else:
-            uppercut_timer += time.time() - uppercut_timer
-    else:
-        uppercut_timer = 0
-
-
-# Variable to track the duration of the correct angle for hook
-
-def detect_hook(angle, dx, dy, player):
-    global hook_timer
-
-    if 60 < angle < 160 and abs(dx) ** 2 > abs(dy) ** 2:
-        if hook_timer >= 0.1:
-            print("hook")
-            player.score["hook"] += 1
-        else:
-            hook_timer += time.time() - hook_timer
-    else:
-        hook_timer = 0
-
-
-def detect_jab(angle, dx, dy, player):
-    if angle > 110 and abs(dy) ** 2 < abs(dx) ** 2:
-        print("jab")
-        player.score["jab"] += 1
+        current_time = time.time()
+        player.left_hand_track_points.append(([cx_left, cy_left], current_time))
+        player.left_hand_track_lengths.append(distance_left_hand)
+        player.left_hand_track_current += distance_left_hand
+        player.left_hand_track_previous_point = cx_left, cy_left
 
 
 def calculate_angle(first_point, mid_point, end_point):
@@ -137,29 +105,56 @@ def get_landmarks(results):
     return left_shoulder_xy, left_elbow_xy, left_wrist_xy, left_wrist.visibility, left_elbow.visibility
 
 
-def track_left_hand(player, landmarks, width, height):
-    min_detection_accuracy = 0.9
-    left_index = landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value]
-    cx_left, cy_left = int(left_index.x * width), int(left_index.y * height)
-    detection_accuracy = left_index.visibility
+def detect_punch(player, angle, left_wrist_visibility, left_elbow_visibility):
+    global last_punch_time
 
-    if detection_accuracy > min_detection_accuracy:
-        px_left, py_left = player.left_hand_track_previous_point
-        distance_left_hand = math.hypot(cx_left - px_left, cy_left - py_left)
+    dx, dy = get_direction(player=player, number_of_points_to_track=2)
 
-        current_time = time.time()
-        player.left_hand_track_points.append(([cx_left, cy_left], current_time))
-        player.left_hand_track_lengths.append(distance_left_hand)
-        player.left_hand_track_current += distance_left_hand
-        player.left_hand_track_previous_point = cx_left, cy_left
+    if time.time() - last_punch_time >= cooldown_duration:
+        if left_wrist_visibility > min_visiblity and left_elbow_visibility > min_visiblity:
+            detect_jab(angle, dx, dy, player)
+            detect_uppercut(angle, dy, player)
+            detect_hook(angle, dx, dy, player)
+
+            last_punch_time = time.time()
 
 
-def draw_on_frame(image, angle, left_elbow_xy, number_of_jabs, results, dx, dy):
+def detect_uppercut(angle, dy, player):
+    global uppercut_timer
+
+    if 30 < angle < 150 and dy < 0:
+        if uppercut_timer >= 0.5:
+            print("uppercut")
+            player.score["uppercut"] += 1
+        else:
+            uppercut_timer += time.time() - uppercut_timer
+    else:
+        uppercut_timer = 0
+
+
+def detect_hook(angle, dx, dy, player):
+    global hook_timer
+
+    if 60 < angle < 160 and abs(dx) ** 2 > abs(dy) ** 2:
+        if hook_timer >= 0.1:
+            print("hook")
+            player.score["hook"] += 1
+        else:
+            hook_timer += time.time() - hook_timer
+    else:
+        hook_timer = 0
+
+
+def detect_jab(angle, dx, dy, player):
+    if angle > 110 and abs(dy) ** 2 < abs(dx) ** 2:
+        print("jab")
+        player.score["jab"] += 1
+
+
+def draw_on_frame(image, angle, left_elbow_xy, results, dx, dy):
     cv2.putText(image, str(angle), tuple(np.multiply(left_elbow_xy, [640, 480]).astype(int)),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2, cv2.LINE_AA)
 
-    # Display the jab counter on the image
-    cv2.putText(image, str(int(number_of_jabs)), (10, 70), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
     cv2.putText(image, f"dx: {dx:.2f}, dy: {dy:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2,
                 cv2.LINE_AA)
 
@@ -193,7 +188,6 @@ def main_loop():
     global stage
 
     create_players()
-    stage = {"jab": "reset", "hook": "reset", "uppercut": "reset"}
 
     while video_capture.isOpened():
         # Capture frame-by-frame
@@ -206,33 +200,28 @@ def main_loop():
         image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
         # Detect the landmarks
-        results = pose_model.process(image)
+        landmarks = pose_model.process(image)
 
         # Check if any landmarks were detected
-        if results.pose_landmarks is not None:
-            left_shoulder_xy, left_elbow_xy, left_wrist_xy, left_wrist_visibility, left_elbow_visibility = get_landmarks(
-                results)
+        if landmarks.pose_landmarks is not None:
+            left_shoulder_xy, left_elbow_xy, left_wrist_xy, left_wrist_visibility, left_elbow_visibility = get_landmarks(results=landmarks)
 
             # Calculate the angle between the shoulder, elbow and wrist
             angle = calculate_angle(left_shoulder_xy, left_elbow_xy, left_wrist_xy)
 
             for player in players:
-                track_left_hand(player, results.pose_landmarks.landmark, image.shape[1], image.shape[0])
+                track_left_hand(player, landmarks.pose_landmarks.landmark, image.shape[1], image.shape[0])
 
                 # Update the stage and punch counters for each player
-                stage = detect_punch(player, angle, stage, left_wrist_visibility,
-                                     left_elbow_visibility)
+                detect_punch(player, angle, left_wrist_visibility, left_elbow_visibility)
 
             wrist_dx, wrist_dy = get_direction(player, 5)
 
-            draw_snake_line(image, player, (0, 255, 0))  # Use green color for the line
+            draw_snake_line(image=image, player=player, color=(0, 255, 0))  # Use green color for the line
+            draw_on_frame(image, angle, left_elbow_xy, landmarks, wrist_dx, wrist_dy)
 
             # Display the punch counters on the image for the first player
             player = players[0]
-            cv2.putText(image, f"Jabs: {player.score['jab']}", (10, 70), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
-            cv2.putText(image, f"Hooks: {player.score['hook']}", (10, 120), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
-            cv2.putText(image, f"Uppercuts: {player.score['uppercut']}", (10, 170), cv2.FONT_HERSHEY_PLAIN, 3,
-                        (255, 0, 255), 3)
 
             # Convert the image back to BGR for display
             image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
