@@ -16,16 +16,10 @@ video_capture = cv2.VideoCapture(0)
 number_of_players = 1
 players = []
 
-# Initialize punch counters
-number_of_jabs = 0
-number_of_hooks = 0
-number_of_uppercuts = 0
 min_visiblity = 0.5
 
 cooldown_duration = 1  # Cooldown duration in seconds
 last_punch_time = 0  # Variable to store the timestamp of the last detected punch
-
-stage = {"jab": "default", "hook": "default", "uppercut": "default"}
 
 
 class Player:
@@ -34,35 +28,17 @@ class Player:
     left_hand_track_current = 0
     left_hand_track_previous_point = 0, 0
 
-    right_hand_track_points = []
-    right_hand_track_lengths = []
-    right_hand_track_current = 0
-    right_hand_track_previous_point = 0, 0
-
-    right_foot_track_points = []
-    right_foot_track_lengths = []
-    right_foot_track_current = 0
-    right_foot_track_previous_point = 0, 0
-
-    left_foot_track_points = []
-    left_foot_track_lengths = []
-    left_foot_track_current = 0
-    left_foot_track_previous_point = 0, 0
-
-    score = {"jab": 0, "hook": 0, "uppercut": 0}
     spawn_time = time.time()
 
 
-def moving_average(points, n):
-    if len(points) < n:
+def get_moving_average(points, number_of_last_points):
+    if len(points) < number_of_last_points:
         return points[-1][0]  # Return the last point if not enough points are available
 
-    sum_x, sum_y = 0, 0
-    for i in range(-n, 0):
-        sum_x += points[i][0][0]
-        sum_y += points[i][0][1]
+    sum_x = sum(point[0][0] for point in points[-number_of_last_points:])
+    sum_y = sum(point[0][1] for point in points[-number_of_last_points:])
 
-    return int(sum_x / n), int(sum_y / n)
+    return int(sum_x / number_of_last_points), int(sum_y / number_of_last_points)
 
 
 def get_direction(player, n):
@@ -70,9 +46,9 @@ def get_direction(player, n):
     if len(player.left_hand_track_points) < 2:
         return 0, 0  # Return 0, 0 if not enough points are available
     # Calculate the moving average of the last n points
-    current_avg = moving_average(player.left_hand_track_points, n)
+    current_avg = get_moving_average(points=player.left_hand_track_points, number_of_last_points=n)
     # Calculate the moving average of the previous n points
-    prev_avg = moving_average(player.left_hand_track_points[:-1], n)
+    prev_avg = get_moving_average(points=player.left_hand_track_points[:-1], number_of_last_points=n)
 
     # Calculate the direction
     dx = current_avg[0] - prev_avg[0]
@@ -248,7 +224,6 @@ def main_loop():
                                      left_elbow_visibility)
 
             wrist_dx, wrist_dy = get_direction(player, 5)
-            draw_on_frame(image, angle, left_elbow_xy, number_of_jabs, results, dx=wrist_dx, dy=wrist_dy)
 
             draw_snake_line(image, player, (0, 255, 0))  # Use green color for the line
 
