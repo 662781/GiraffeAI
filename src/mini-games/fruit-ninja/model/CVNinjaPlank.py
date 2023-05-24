@@ -1,9 +1,11 @@
 from utils import Generics
 import pymunk
+from model import CVNinjaObject
+import numpy as np
 
 class CVNinjaPlank(CVNinjaObject):
 
-    def __init__(self, image, size)
+    def __init__(self, image, size):
         super().__init__(image, size)
         self._define_objects()
     
@@ -17,29 +19,30 @@ class CVNinjaPlank(CVNinjaObject):
         # Vertices for diagonal image split
         body = pymunk.Body(1, 100)
         shape = pymunk.Poly(body, Generics.get_vertices_by_image(diagonal_splice_left))
-        self.pymunk_objects_broken.append("DIAGONAL_SPLICE_LEFT":(diagonal_splice_left,shape))
+        self.pymunk_objects_broken["DIAGONAL_SPLICE_LEFT"] =  (diagonal_splice_left,shape)
 
         body = pymunk.Body(1, 100)
         shape = pymunk.Poly(body, Generics.get_vertices_by_image(diagonal_splice_right))
-        self.pymunk_objects_broken.append("DIAGONAL_SPLICE_RIGHT":(diagonal_splice_right,shape))
+        self.pymunk_objects_broken["DIAGONAL_SPLICE_RIGHT"] = (diagonal_splice_right,shape)
         
         # Vertices for vertical image split
-        horizontal_splice_left =  wood[:,:size//2]
-        horizontal_splice_right = wood[:,size//2:]
+        horizontal_splice_left =  self.image[:,:self.size//2]
+        horizontal_splice_right = self.image[:,self.size//2:]
 
         body = pymunk.Body(1, 100)
         shape = pymunk.Poly(body, Generics.get_vertices_by_image(horizontal_splice_left))
-        self.pymunk_objects_broken.append("HORIZONTAL_SPLICE_LEFT":(horizontal_splice_left,shape))
+        self.pymunk_objects_broken["HORIZONTAL_SPLICE_LEFT"]  =(horizontal_splice_left,shape)
 
         body = pymunk.Body(1, 100)
         shape = pymunk.Poly(body, Generics.get_vertices_by_image(horizontal_splice_right))
-        self.pymunk_objects_broken.append("HORIZONTAL_SPLICE_RIGHT":(horizontal_splice_right,shape))
+        self.pymunk_objects_broken["HORIZONTAL_SPLICE_RIGHT"] = (horizontal_splice_right,shape)
 
+    
     def collision_aftermath(self, space, shape, contact_point):
         # ignore contact point for now
 
-        # remove the main object from spawn list
-        self.pymunk_objects_to_spawn = []
+        # remove the main object from draw list
+        self.pymunk_objects_to_draw.remove({"image": self.image, "shape" : shape}) # where 
         # take the cut object and set it to spawn 
         piece1 =  self.pymunk_objects_broken["HORIZONTAL_SPLICE_LEFT"]
         piece1_body = piece1[1].body
@@ -57,7 +60,8 @@ class CVNinjaPlank(CVNinjaObject):
         piece2_body.position = shape.body.position
 
         # set cut wood part in correct place 
-        piece2_body.position.x = int(piece2_body.position.x + self.image.shape[1]//2)
+        new_position = (int(piece2_body.position.x + self.image.shape[1]//2), piece2_body.position.y)
+        piece2_body.position = new_position
 
         piece1_body.apply_impulse_at_local_point((-100, 0))
 
