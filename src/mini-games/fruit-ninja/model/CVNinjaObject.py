@@ -9,32 +9,39 @@ Once created it will be called to spawn its specific object into the space and a
 Each "Whole" pymunk_object has a reference to its parent called "patent_object".
 From that we can call the collision_aftermath method from the collisionHandler in pymunk
 The class will then:
-    - remove the collided object from the list of objects to spawn
+    - remove the collided object from the list of objects to draw
     - spawn the broken object's pieces into the given space 
-    - add the pieces as to the list of objects to spawn. 
+    - add the pieces to the list of objects to draw. 
 '''
 
 class CVNinjaObject():
     pymunk_objects_to_draw = [] # list of items that need to be drawn on frame for the object. Denoted as assoc array: {image:, shape:}
-    pymunk_objects_broken =  {} # list of parts of the object, each item denoted as "key": (image,shape)
     
+    # list of vertices and spliced images for the object and its pieces, All predefined by the child object's constructor
+    images_vertices =  {} # denoted as "key": (image, vertices)
+    
+
     def __init__(self, image, size: int):
         self.size = size # for now width and height will be the same
         self.image = cv2.resize(image, (self.size, self.size), interpolation=cv2.INTER_LINEAR)
-       
-
-    def _append_object_to_spawn(self, image, shape):
-        # made just so I don't have to type the stupid assoc key value everytime, maybe I'll change it some day
-        self.pymunk_objects_to_draw.append({"image": image, "shape": shape}) 
 
     def collision_aftermath(self, space, shape, contact_point):
         # Used to handle interactions specific to objects (wood is cut, rock is crushed, bomb explodes)
         pass
 
-    def spawn_object(self, space):
+    def _get_images_vertices(self):
+        # base implementation gets vertices for the "whole" object
+        self.images_vertices["WHOLE"] = (self.image, Generics.get_vertices_by_image(self.image))
+
+    def spawn_object(self, space, collision_type, position=(50,50)):
+        # todo: shoot up physics.
         # Set the "whole" object as standard object to spawn
         body = pymunk.Body(1, 100)
-        body.position = (50,200)
-        shape = pymunk.Poly(body, Generics.get_vertices_by_image(self.image))
+        body.position = position
+        
+        shape = pymunk.Poly(body, self.images_vertices["WHOLE"][1])
         shape.parent_object = self # For retrieval during collision
-        self._append_object_to_spawn(self.image, shape)
+        shape.collision_type = collision_type
+        space.add(shape, body)
+        shape.image = self.image
+        self.pymunk_objects_to_draw.append(shape)

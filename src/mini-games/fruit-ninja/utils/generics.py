@@ -34,30 +34,33 @@ class Generics():
 
     @staticmethod
     def overlayPNG(imgBack, imgFront, pos=[0, 0]):
-        
-        hf, wf, cf = imgFront.shape
-        hb, wb, cb = imgBack.shape
-        if(pos[0] > wb or pos[1] > hb): # prevent out of bounds overlays  
-            #print("Image not in view")
+        try:
+            hf, wf, cf = imgFront.shape
+            hb, wb, cb = imgBack.shape
+            if(pos[0] > wb or pos[1] > hb): # prevent out of bounds overlays  
+                #print("Image not in view")
+                return imgBack
+            *_, mask = cv2.split(imgFront)
+            maskBGRA = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGRA)
+            maskBGR = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+            imgRGBA = cv2.bitwise_and(imgFront, maskBGRA)
+            imgRGB = cv2.cvtColor(imgRGBA, cv2.COLOR_BGRA2BGR)
+
+            y1, y2 = max(0, pos[1]), min(hf + pos[1], hb)
+            x1, x2 = max(0, pos[0]), min(wf + pos[0], wb)
+            imgMaskFull = np.zeros((hb, wb, cb), np.uint8)
+            # Adjusted MaskFull and MaskFull2 to function even if image is partially out of bounds
+            imgMaskFull[y1:y2, x1:x2, :] = imgRGB[(y1-pos[1]):(y2-pos[1]), (x1-pos[0]):(x2-pos[0]), :]
+            imgMaskFull2 = np.ones((hb, wb, cb), np.uint8) * 255
+            maskBGRInv = cv2.bitwise_not(maskBGR)
+            imgMaskFull2[y1:y2, x1:x2, :] = maskBGRInv[(y1-pos[1]):(y2-pos[1]), (x1-pos[0]):(x2-pos[0]), :]
+
+            imgBack = cv2.bitwise_and(imgBack, imgMaskFull2)
+            imgBack = cv2.bitwise_or(imgBack, imgMaskFull)
             return imgBack
-        *_, mask = cv2.split(imgFront)
-        maskBGRA = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGRA)
-        maskBGR = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
-        imgRGBA = cv2.bitwise_and(imgFront, maskBGRA)
-        imgRGB = cv2.cvtColor(imgRGBA, cv2.COLOR_BGRA2BGR)
-
-        y1, y2 = max(0, pos[1]), min(hf + pos[1], hb)
-        x1, x2 = max(0, pos[0]), min(wf + pos[0], wb)
-        imgMaskFull = np.zeros((hb, wb, cb), np.uint8)
-        # Adjusted MaskFull and MaskFull2 to function even if image is partially out of bounds
-        imgMaskFull[y1:y2, x1:x2, :] = imgRGB[(y1-pos[1]):(y2-pos[1]), (x1-pos[0]):(x2-pos[0]), :]
-        imgMaskFull2 = np.ones((hb, wb, cb), np.uint8) * 255
-        maskBGRInv = cv2.bitwise_not(maskBGR)
-        imgMaskFull2[y1:y2, x1:x2, :] = maskBGRInv[(y1-pos[1]):(y2-pos[1]), (x1-pos[0]):(x2-pos[0]), :]
-
-        imgBack = cv2.bitwise_and(imgBack, imgMaskFull2)
-        imgBack = cv2.bitwise_or(imgBack, imgMaskFull)
-        return imgBack
+        except:
+            print("Error in overlay")
+            return imgBack
 
     @staticmethod
     def get_vertices_by_image(image):

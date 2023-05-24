@@ -7,6 +7,7 @@ import pymunk
 
 class CVNinjaPlayer:
 
+
     def __init__(self, collision_type):
         score = 0
         spawn_time = time.time()
@@ -77,19 +78,19 @@ class CVNinjaPlayer:
         new_right_foot_coords = Generics.create_additional_keypoint(right_ankle, right_knee)
 
         # Calculate distance between each limb's coordinates
-        distance_left_hand = math.hypot(
+        self.distance_left_hand = math.hypot(
             new_left_hand_coords[0]-self.left_hand_track_previous_point[0], 
             new_left_hand_coords[1]-self.left_hand_track_previous_point[1]
             )
-        distance_right_hand = math.hypot(
+        self.distance_right_hand = math.hypot(
             new_right_hand_coords[0]-self.right_hand_track_previous_point[0], 
             new_right_hand_coords[1]-self.right_hand_track_previous_point[1]
             )
-        distance_right_foot = math.hypot(
+        self.distance_right_foot = math.hypot(
             new_right_foot_coords[0]-self.right_foot_track_previous_point[0], 
             new_right_foot_coords[1]-self.right_foot_track_previous_point[1]
             )
-        distance_left_foot = math.hypot(
+        self.distance_left_foot = math.hypot(
             new_left_foot_coords[0]-self.left_foot_track_previous_point[0], 
             new_left_foot_coords[1]-self.left_foot_track_previous_point[1]
             )
@@ -99,15 +100,15 @@ class CVNinjaPlayer:
         self.right_foot_track_points.append(new_right_foot_coords)
         self.left_foot_track_points.append(new_left_foot_coords)
 
-        self.left_hand_track_lengths.append(distance_left_hand)
-        self.right_hand_track_lengths.append(distance_right_hand)
-        self.right_foot_track_lengths.append(distance_right_foot)
-        self.left_foot_track_lengths.append(distance_left_foot)
+        self.left_hand_track_lengths.append(self.distance_left_hand)
+        self.right_hand_track_lengths.append(self.distance_right_hand)
+        self.right_foot_track_lengths.append(self.distance_right_foot)
+        self.left_foot_track_lengths.append(self.distance_left_foot)
 
-        self.left_hand_track_current += distance_left_hand
-        self.right_hand_track_current += distance_right_hand
-        self.right_foot_track_current += distance_right_foot
-        self.left_foot_track_current += distance_left_foot
+        self.left_hand_track_current += self.distance_left_hand
+        self.right_hand_track_current += self.distance_right_hand
+        self.right_foot_track_current += self.distance_right_foot
+        self.left_foot_track_current += self.distance_left_foot
 
         self.left_hand_track_previous_point = new_left_hand_coords 
         self.right_hand_track_previous_point =  new_right_hand_coords
@@ -119,14 +120,6 @@ class CVNinjaPlayer:
         hitTime = (current_time - self.spawn_time)
         self.score += int(100 - hitTime * 5) 
         self.spawn_time = time.time()
-
-    # def draw_tracking_lines(self, image):
-    #     for i, point in enumerate(self.left_hand_track_points): # any track point will do
-    #         if i != 0:
-    #             cv2.line(image, self.left_hand_track_points[i-1], self.left_hand_track_points[i], (0,0,255),2)
-    #             cv2.line(image, self.right_hand_track_points[i-1], self.right_hand_track_points[i], (0,0,255),2)
-    #             cv2.line(image, self.right_foot_track_points[i-1], self.right_foot_track_points[i], (0,0,255),2)
-    #             cv2.line(image, self.left_foot_track_points[i-1], self.left_foot_track_points[i], (0,0,255),2)
 
     def get_trailing(self, image):
         for i, point in enumerate(self.left_hand_track_points): # any track point will do
@@ -160,6 +153,17 @@ class CVNinjaPlayer:
             self.left_foot_track_lengths = []
             return True
         return False
+
+    def get_trailing_length_by_limb(self,limb:str):
+        if (limb == "right leg"):
+            return self.distance_right_foot
+        elif (limb == "left leg"):
+            return self.distance_left_foot
+        elif (limb == "right hand"):
+            return self.distance_right_hand
+        elif (limb == "left hand"):
+            return self.distance_left_hand
+        return 0
     
     def reset_keypoints(self):
         self.left_hand_track_points = self.left_hand_track_points[-2:]
@@ -173,3 +177,8 @@ class CVNinjaPlayer:
 
         self.left_foot_track_points = self.left_foot_track_points[-2:]
         self.left_foot_track_lengths = self.left_foot_track_lengths[-2:]
+
+        self.right_hand_track_current = 0
+        self.left_hand_track_current = 0
+        self.right_foot_track_current = 0
+        self.left_foot_track_current = 0
