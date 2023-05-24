@@ -3,6 +3,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import math
+import random
 
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
@@ -23,6 +24,9 @@ last_punch_time = 0  # Variable to store the timestamp of the last detected punc
 uppercut_timer = 0
 hook_timer = 0
 
+punch_types = ["jab", "uppercut", "hook"]
+selected_punch = "jab"
+
 
 class Player:
     left_hand_track_points = []
@@ -37,6 +41,22 @@ class Player:
     }
 
     spawn_time = time.time()
+
+
+def select_random_punch():
+    global selected_punch
+    punch_types = ["jab", "uppercut", "hook"]
+    probabilities = [4, 1, 1]  # Probabilities of each punch type
+
+    # Create a weighted list of punches based on probabilities
+    weighted_punches = []
+    for i, punch in enumerate(punch_types):
+        weighted_punches.extend([punch] * probabilities[i])
+
+    # Select a random punch from the weighted list
+    random_punch = random.choice(weighted_punches)
+    print("Selected punch:", random_punch)
+    selected_punch = random_punch
 
 
 def get_moving_average(points, number_of_last_points):
@@ -162,7 +182,7 @@ def draw_on_frame(image, angle, left_elbow_xy, results, dx, dy, player):
     mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,
                               mp_drawing.DrawingSpec(color=(245, 117, 66), thickness=2, circle_radius=2),
                               mp_drawing.DrawingSpec(color=(245, 66, 230), thickness=2, circle_radius=2), )
-    draw_snake_line(image=image, player=player, color=(0, 255, 0))  # Use green color for the line
+    draw_snake_line(image=image, player=player, color=(0, 255, 0))
 
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     # Display the resulting image
@@ -185,44 +205,39 @@ def draw_snake_line(image, player, color):
             cv2.line(image, tuple(player.left_hand_track_points[i - 1][0]), tuple(player.left_hand_track_points[i][0]),
                      color, 3)
 
-#make this method more efficient
-def main_loop():
-    global stage
 
+# ...
+
+def main_loop():
+    global last_punch_time
     create_players()
 
     while video_capture.isOpened():
-        # Capture frame-by-frame
         ret, frame = video_capture.read()
 
         if not ret:
             break
 
-        # Convert the image to RGB
         image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-        # Detect the landmarks
         landmarks = pose_model.process(image)
 
-        # Check if any landmarks were detected
         if landmarks.pose_landmarks is not None:
-            left_shoulder_xy, left_elbow_xy, left_wrist_xy, left_wrist_visibility, left_elbow_visibility = get_landmarks(results=landmarks)
-
-            # Calculate the angle between the shoulder, elbow and wrist
+            left_shoulder_xy, left_elbow_xy, left_wrist_xy, left_wrist_visibility, left_elbow_visibility = get_landmarks(
+                results=landmarks)
             angle = calculate_angle(left_shoulder_xy, left_elbow_xy, left_wrist_xy)
 
             for player in players:
                 track_left_hand(player, landmarks.pose_landmarks.landmark, image.shape[1], image.shape[0])
-
-                # Update the stage and punch counters for each player
                 detect_punch(player, angle, left_wrist_visibility, left_elbow_visibility)
 
             wrist_dx, wrist_dy = get_direction(player, 5)
-
             draw_on_frame(image, angle, left_elbow_xy, landmarks, wrist_dx, wrist_dy, player)
 
-            # Display the punch counters on the image for the first player
-            player = players[0]
+           #call the selected_punch function every 5 seconds
+            if time.time() - last_punch_time >= 5:
+                select_random_punch()
+                last_punch_time = time.time()
+
 
 
         # Exit the loop if 'q' is pressed
@@ -235,5 +250,8 @@ def main_loop():
 
 
 
+
+
 if __name__ == '__main__':
     main_loop()
+
