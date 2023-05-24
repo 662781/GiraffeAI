@@ -151,7 +151,7 @@ def detect_jab(angle, dx, dy, player):
         player.score["jab"] += 1
 
 
-def draw_on_frame(image, angle, left_elbow_xy, results, dx, dy):
+def draw_on_frame(image, angle, left_elbow_xy, results, dx, dy, player):
     cv2.putText(image, str(angle), tuple(np.multiply(left_elbow_xy, [640, 480]).astype(int)),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2, cv2.LINE_AA)
 
@@ -162,7 +162,9 @@ def draw_on_frame(image, angle, left_elbow_xy, results, dx, dy):
     mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,
                               mp_drawing.DrawingSpec(color=(245, 117, 66), thickness=2, circle_radius=2),
                               mp_drawing.DrawingSpec(color=(245, 66, 230), thickness=2, circle_radius=2), )
+    draw_snake_line(image=image, player=player, color=(0, 255, 0))  # Use green color for the line
 
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     # Display the resulting image
     cv2.imshow('Webcam', image)
 
@@ -183,7 +185,7 @@ def draw_snake_line(image, player, color):
             cv2.line(image, tuple(player.left_hand_track_points[i - 1][0]), tuple(player.left_hand_track_points[i][0]),
                      color, 3)
 
-
+#make this method more efficient
 def main_loop():
     global stage
 
@@ -217,17 +219,11 @@ def main_loop():
 
             wrist_dx, wrist_dy = get_direction(player, 5)
 
-            draw_snake_line(image=image, player=player, color=(0, 255, 0))  # Use green color for the line
-            draw_on_frame(image, angle, left_elbow_xy, landmarks, wrist_dx, wrist_dy)
+            draw_on_frame(image, angle, left_elbow_xy, landmarks, wrist_dx, wrist_dy, player)
 
             # Display the punch counters on the image for the first player
             player = players[0]
 
-            # Convert the image back to BGR for display
-            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-
-            # Display the resulting image
-            cv2.imshow('Webcam', image)
 
         # Exit the loop if 'q' is pressed
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -236,6 +232,7 @@ def main_loop():
     # Release the video capture and destroy all windows
     video_capture.release()
     cv2.destroyAllWindows()
+
 
 
 if __name__ == '__main__':
