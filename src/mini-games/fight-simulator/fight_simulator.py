@@ -40,6 +40,7 @@ class Player:
         "hook": 0
     }
 
+    points = 0
     spawn_time = time.time()
 
 
@@ -145,7 +146,9 @@ def detect_uppercut(angle, dy, player):
     if 30 < angle < 150 and dy < 0:
         if uppercut_timer >= 0.5:
             print("uppercut")
-            player.score["uppercut"] += 1
+            if selected_punch == "uppercut":
+                player.points += 1
+            uppercut_timer = 0
         else:
             uppercut_timer += time.time() - uppercut_timer
     else:
@@ -157,8 +160,9 @@ def detect_hook(angle, dx, dy, player):
 
     if 60 < angle < 160 and abs(dx) ** 2 > abs(dy) ** 2:
         if hook_timer >= 0.1:
-            print("hook")
-            player.score["hook"] += 1
+            if selected_punch == "hook":
+                player.points += 1
+            hook_timer = 0
         else:
             hook_timer += time.time() - hook_timer
     else:
@@ -168,7 +172,8 @@ def detect_hook(angle, dx, dy, player):
 def detect_jab(angle, dx, dy, player):
     if angle > 110 and abs(dy) ** 2 < abs(dx) ** 2:
         print("jab")
-        player.score["jab"] += 1
+        if selected_punch == "jab":
+            player.points += 1
 
 
 def draw_on_frame(image, angle, left_elbow_xy, results, dx, dy, player):
@@ -177,12 +182,19 @@ def draw_on_frame(image, angle, left_elbow_xy, results, dx, dy, player):
 
     cv2.putText(image, f"dx: {dx:.2f}, dy: {dy:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2,
                 cv2.LINE_AA)
+    # put the selected_punch on the screen in the middle
+    cv2.putText(image, f"selected punch: {selected_punch}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2,
+                cv2.LINE_AA)
 
     # Draw the landmarks on the image
     mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,
                               mp_drawing.DrawingSpec(color=(245, 117, 66), thickness=2, circle_radius=2),
                               mp_drawing.DrawingSpec(color=(245, 66, 230), thickness=2, circle_radius=2), )
     draw_snake_line(image=image, player=player, color=(0, 255, 0))
+
+    # draw the points on the screen
+    cv2.putText(image, f"points: {player.points}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2,
+                cv2.LINE_AA)
 
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     # Display the resulting image
@@ -233,12 +245,10 @@ def main_loop():
             wrist_dx, wrist_dy = get_direction(player, 5)
             draw_on_frame(image, angle, left_elbow_xy, landmarks, wrist_dx, wrist_dy, player)
 
-           #call the selected_punch function every 5 seconds
+            # call the selected_punch function every 5 seconds
             if time.time() - last_punch_time >= 5:
                 select_random_punch()
                 last_punch_time = time.time()
-
-
 
         # Exit the loop if 'q' is pressed
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -249,9 +259,5 @@ def main_loop():
     cv2.destroyAllWindows()
 
 
-
-
-
 if __name__ == '__main__':
     main_loop()
-
