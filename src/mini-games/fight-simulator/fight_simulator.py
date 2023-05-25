@@ -195,7 +195,7 @@ def draw_on_frame(image, angle, left_elbow_xy, results, dx, dy, player, elapsed_
     # draw the points on the screen
     cv2.putText(image, f"points: {player.points}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2,
                 cv2.LINE_AA)
-    #draw the time in the top right corner
+    # draw the time in the top right corner
     cv2.putText(image, f"time: {91 - elapsed_time:.0f}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2,
                 cv2.LINE_AA)
 
@@ -258,7 +258,6 @@ def main_loop():
             elapsed_time = time.time() - start_time
 
             draw_on_frame(image, angle, left_elbow_xy, landmarks, wrist_dx, wrist_dy, player, elapsed_time)
-
 
             # Check if the game time has exceeded 90 seconds
             if elapsed_time >= 91:
