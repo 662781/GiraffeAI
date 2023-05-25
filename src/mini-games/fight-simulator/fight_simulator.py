@@ -176,7 +176,7 @@ def detect_jab(angle, dx, dy, player):
             player.points += 1
 
 
-def draw_on_frame(image, angle, left_elbow_xy, results, dx, dy, player):
+def draw_on_frame(image, angle, left_elbow_xy, results, dx, dy, player, elapsed_time):
     cv2.putText(image, str(angle), tuple(np.multiply(left_elbow_xy, [640, 480]).astype(int)),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2, cv2.LINE_AA)
 
@@ -194,6 +194,9 @@ def draw_on_frame(image, angle, left_elbow_xy, results, dx, dy, player):
 
     # draw the points on the screen
     cv2.putText(image, f"points: {player.points}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2,
+                cv2.LINE_AA)
+    #draw the time in the top right corner
+    cv2.putText(image, f"time: {91 - elapsed_time:.0f}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2,
                 cv2.LINE_AA)
 
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
@@ -224,6 +227,8 @@ def main_loop():
     global last_punch_time
     create_players()
 
+    start_time = time.time()
+
     while video_capture.isOpened():
         ret, frame = video_capture.read()
 
@@ -243,12 +248,21 @@ def main_loop():
                 detect_punch(player, angle, left_wrist_visibility, left_elbow_visibility)
 
             wrist_dx, wrist_dy = get_direction(player, 5)
-            draw_on_frame(image, angle, left_elbow_xy, landmarks, wrist_dx, wrist_dy, player)
 
-            # call the selected_punch function every 5 seconds
+            # Call the selected_punch function every 5 seconds
             if time.time() - last_punch_time >= 5:
                 select_random_punch()
                 last_punch_time = time.time()
+
+            # Calculate elapsed time
+            elapsed_time = time.time() - start_time
+
+            draw_on_frame(image, angle, left_elbow_xy, landmarks, wrist_dx, wrist_dy, player, elapsed_time)
+
+
+            # Check if the game time has exceeded 90 seconds
+            if elapsed_time >= 91:
+                break
 
         # Exit the loop if 'q' is pressed
         if cv2.waitKey(1) & 0xFF == ord('q'):
