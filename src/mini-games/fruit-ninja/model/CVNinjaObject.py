@@ -15,13 +15,16 @@ The class will then:
 '''
 
 class CVNinjaObject():
-    pymunk_objects_to_draw = [] # list of items that need to be drawn on frame for the object. Denoted as assoc array: {image:, shape:}
     
-    # list of vertices and spliced images for the object and its pieces, All predefined by the child object's constructor
-    images_vertices =  {} # denoted as "key": (image, vertices)
     
 
     def __init__(self, image, size: int):
+        # list of items that need to be drawn on frame for the object.
+        self.pymunk_objects_to_draw = [] 
+    
+        # list of vertices and spliced images for the object and its pieces, All predefined by the child object's constructor
+        self.images_vertices =  {} # denoted as "key": vertices
+        
         self.size = size # for now width and height will be the same
         self.image = cv2.resize(image, (self.size, self.size), interpolation=cv2.INTER_LINEAR)
 

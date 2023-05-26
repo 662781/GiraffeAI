@@ -92,6 +92,7 @@ def process_hit(arbiter, space, data):
                 shape.parent_object.collision_aftermath(space, shape)
                 space.remove(shape, shape.body)
                 random_x = random.randint(100, 600)
+                objects_player_1[0].spawn_object(space, collision_types["objects_player_1"], position=(random_x, 80))
             else:
                 print("Trail not long enough: ",shape_trail_length )
             #shape.parent_object.spawn_object(space, collision_types["objects_player_1"],position=(random_x, 80))

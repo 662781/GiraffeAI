@@ -20,6 +20,8 @@ class Generics():
 
     @staticmethod
     def create_additional_keypoint(wrist, elbow):
+        # The YOLO model limits keypoint detection up to the wrist, because it has not been trained on hand movement.
+        # This function creates a keypoint on the palm from the 2 other keypoints using line function math (if you have 2 points, you can make a line to the next). 
         keypoint1 = wrist
         keypoint2 = elbow
         
@@ -37,8 +39,7 @@ class Generics():
         try:
             hf, wf, cf = imgFront.shape
             hb, wb, cb = imgBack.shape
-            if(pos[0] > wb or pos[1] > hb): # prevent out of bounds overlays  
-                #print("Image not in view")
+            if(pos[0] > wb or pos[1] > hb): # prevent out of bounds overlays
                 return imgBack
             *_, mask = cv2.split(imgFront)
             maskBGRA = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGRA)
@@ -49,7 +50,7 @@ class Generics():
             y1, y2 = max(0, pos[1]), min(hf + pos[1], hb)
             x1, x2 = max(0, pos[0]), min(wf + pos[0], wb)
             imgMaskFull = np.zeros((hb, wb, cb), np.uint8)
-            # Adjusted MaskFull and MaskFull2 to function even if image is partially out of bounds
+            # The original method is crap for partially visible images, I Adjusted MaskFull and MaskFull2 to function even if the image is partially out of bounds
             imgMaskFull[y1:y2, x1:x2, :] = imgRGB[(y1-pos[1]):(y2-pos[1]), (x1-pos[0]):(x2-pos[0]), :]
             imgMaskFull2 = np.ones((hb, wb, cb), np.uint8) * 255
             maskBGRInv = cv2.bitwise_not(maskBGR)
@@ -59,7 +60,8 @@ class Generics():
             imgBack = cv2.bitwise_or(imgBack, imgMaskFull)
             return imgBack
         except:
-            print("Error in overlay")
+            # Other problems don't affect application performance so generic catch and pass it back 
+            #print("Error in overlay") 
             return imgBack
 
     @staticmethod
@@ -75,6 +77,30 @@ class Generics():
                 vertices.append((x, y))
         return vertices
 
+    @staticmethod
+    def draw_pymunk_object_in_opencv(background, pymunk_object):
+        # Draw a pymunk physics object on the screen with opencv
+        vertices = [(v+pymunk_object.body.position) for v in pymunk_object.get_vertices()]
+        vertices = np.array(vertices, dtype=np.int32)
+        cv2.fillPoly(background, [vertices], (255, 255, 255))
+        pos = pymunk_object.body.position
+        x, y = int(pos.x), int(pos.y)
+        background = Generics.overlayPNG(background, pymunk_object.image, [x, y])
+        return background
+
+
+    @staticmethod
+    def get_player_trailing(player, image):
+        # Set the collision objects that are attached to the player's palms to the current coordinates and draw a slashing trail  
+        player.line_left_leg_shape.unsafe_set_vertices([(player.left_foot_track_points[-1]), (player.left_foot_track_points[0])])
+        player.line_right_leg_shape.unsafe_set_vertices([(player.right_foot_track_points[-1]), (player.right_foot_track_points[0])])
+        player.line_left_hand_shape.unsafe_set_vertices([(player.left_hand_track_points[-1]),(player.left_hand_track_points[0])])
+        player.line_right_hand_shape.unsafe_set_vertices([(player.right_hand_track_points[-1]),(player.right_hand_track_points[0])])
+
+        cv2.line(image, player.left_hand_track_points[-1], player.left_hand_track_points[0], (0, 0, 255), 5)
+        cv2.line(image, player.right_hand_track_points[-1], player.right_hand_track_points[0], (0, 0, 255), 5)
+        cv2.line(image, player.right_foot_track_points[-1], player.right_foot_track_points[0], (0, 0, 255), 5)
+        cv2.line(image, player.left_foot_track_points[-1], player.left_foot_track_points[0], (0, 0, 255), 5)
     @staticmethod
     def draw_stick_figure(image, keypoints):
         right_wrist = (int(keypoints[9][0]), int(keypoints[9][1]))
