@@ -1,0 +1,1 @@
+from .CVNinjaGame import CVNinjaGame
