@@ -18,6 +18,10 @@ class CVMainMenu(CVGame):
     def __init__(self):
         super().__init__()
         self.cvninja_image = cv2.imread(CVAssets.IMAGE_MENU_CVNINJA, cv2.IMREAD_UNCHANGED) 
+        self.warming_up_image = cv2.imread(CVAssets.IMAGE_MENU_WARMING_UP, cv2.IMREAD_UNCHANGED)
+        self.fight_simulator_image = cv2.imread(CVAssets.IMAGE_MENU_FIGHT_SIMULATOR, cv2.IMREAD_UNCHANGED)
+        self.rock_paper_scissors_image = cv2.imread(CVAssets.IMAGE_MENU_ROCK_PAPER_SCISSORS, cv2.IMREAD_UNCHANGED)
+
         self.game_options = []
         self.yolo_model = YOLO(CVAssets.YOLO_MODEL_L)  # load an official model
         self.background = cv2.imread(CVAssets.IMAGE_DOJO, cv2.IMREAD_UNCHANGED)
@@ -27,13 +31,20 @@ class CVMainMenu(CVGame):
         self.space = pymunk.Space()
         self.space.gravity = (0, 0)
         # todo: game menu options need new images but the design has terrible images except for the CVNinja one. Have Bas edit them on figma and download them 
-        self.ninja_item = MainMenuObject(self.cvninja_image, 150)
-        self.ninja_item.spawn_object(self.space, 1, position=(50,50))
-        self.ninja_item.spawn_object(self.space, 2, position=(450,50))
-        self.ninja_item.spawn_object(self.space, 3, position=(50,320))
-        self.ninja_item.spawn_object(self.space, 4, position=(450,320))
+        self.warming_up_item = MainMenuObject(self.warming_up_image, 150)
+        self.warming_up_item.spawn_object(self.space, 1, position=(50,50))
 
-        self.game_options.append(self.ninja_item)
+        self.ninja_item = MainMenuObject(self.cvninja_image, 150)
+        self.ninja_item.spawn_object(self.space, 2, position=(450,50))
+        
+        
+        self.fight_simulator_item = MainMenuObject(self.fight_simulator_image, 150)
+        self.fight_simulator_item.spawn_object(self.space, 3, position=(50,320))
+
+        self.rock_paper_scissors_item = MainMenuObject(self.rock_paper_scissors_image, 150)
+        self.rock_paper_scissors_item.spawn_object(self.space, 4, position=(450,320))
+
+        self.game_options.extend([self.warming_up_item, self.ninja_item, self.fight_simulator_item, self.rock_paper_scissors_item])
         
         self.background = cv2.resize(self.background, (self.options["CAMERA_WIDTH"], self.options["CAMERA_WIDTH"]))
         self.player = CVNinjaPlayer(5)

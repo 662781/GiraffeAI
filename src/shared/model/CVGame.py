@@ -8,14 +8,13 @@ class CVGame:
         self.options_next_game = {"CAMERA_WIDTH": 640, "CAMERA_HEIGHT" : 480}
 
         self.camera_width = self.options_next_game["CAMERA_WIDTH"]
-        self.camera_height = self.options_next_game
+        self.camera_height = self.options_next_game["CAMERA_HEIGHT"]
         # Indicator used by other games if the game is exiting to another game or a complete quit
         self.should_switch = False
         self.cvFpsCalc = CvFpsCalc(buffer_len=10)
 
 
     def setup(self, options):
-
         pass
 
     def update(self, image):
