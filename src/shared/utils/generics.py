@@ -140,14 +140,31 @@ class Generics():
         left_ankle = (int(keypoints[16][0]), int(keypoints[16][1]))
         left_knee = (int(keypoints[14][0]), int(keypoints[14][1]))
 
+        left_shoulder = (int(keypoints[6][0]), int(keypoints[6][1]))
+        right_shouler = (int(keypoints[5][0]), int(keypoints[5][1]))
+
+        left_hip = (int(keypoints[12][0]), int(keypoints[12][1]))
+        right_hip = (int(keypoints[11][0]), int(keypoints[11][1]))
+
         new_left_hand_coords = Generics.create_additional_keypoint(left_wrist, left_elbow)
         new_right_hand_coords =  Generics.create_additional_keypoint(right_wrist, right_elbow)
         new_left_foot_coords =  Generics.create_additional_keypoint(left_ankle, left_knee)
         new_right_foot_coords = Generics.create_additional_keypoint(right_ankle, right_knee)
         width = 20
         color = (255, 255, 255)
+
+        # Body
+        cv2.line(image, left_shoulder, right_shouler, color, width-10)
+        cv2.line(image, left_shoulder, left_hip, color, width-10)
+
+        cv2.line(image, right_shouler, right_hip, color, width-10)
+        cv2.line(image, right_hip, left_hip, color, width-10)
+
         # Head
         cv2.circle(image, (int(keypoints[0][0]), int(keypoints[0][1])), 20, color, -1)
+        cv2.circle(image, (int(keypoints[1][0]), int(keypoints[1][1]) + 10), 4, (0,0,0), -1)
+        cv2.circle(image, (int(keypoints[2][0]), int(keypoints[2][1]) + 10), 4, (0,0,0), -1)
+
         # Right arm
         cv2.line(image, right_elbow, (int(keypoints[5][0]), int(keypoints[5][1])), color, width)
         cv2.line(image, right_wrist, right_elbow, color, width)
