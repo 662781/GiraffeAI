@@ -20,12 +20,14 @@ from menus import CVMainMenu, CVNinjaMenu
 class GameManager:
     # count used for overlaying a "loading screen", more info below. 
     count = 0 
-    # Put your menus on the same line as your game, for clarity
-    games = { 
+    
+    games = {
+        # Put your menus on the same line as your game, for clarity 
+        # Main Menu
         "Main Menu": CVMainMenu(),
-            
+        # CVNinja
         "CVNinja": CVNinjaGame(), "CVNinja Menu": CVNinjaMenu(),
-
+        # 
         "Fight Simulator": FightSimulatorGame(),
 
         "Rock Paper Scissors": RockPaperScissorsGame(),
