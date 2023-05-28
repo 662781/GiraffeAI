@@ -23,17 +23,14 @@ class CVNinjaGame(CVGame):
                "rock_broken":4,
           }
           self.yolo_model = YOLO(CVAssets.YOLO_MODEL_L)  # load an official model
-          
-          self.background = None
-          self.objects_player_1 = None
 
           self.wood = cv2.imread(CVAssets.IMAGE_PLANK, cv2.IMREAD_UNCHANGED)
 
           self.stone = cv2.imread(CVAssets.IMAGE_ROCK, cv2.IMREAD_UNCHANGED)
           self.bomb = cv2.imread(CVAssets.IMAGE_BOMB, cv2.IMREAD_UNCHANGED)
-
           self.size = 70
           self.objects_player_1 = [CVNinjaPlank(self.wood, self.size)]
+         
 
           self.background = cv2.imread(CVAssets.IMAGE_DOJO, cv2.IMREAD_UNCHANGED)
           self.background = cv2.cvtColor(self.background, cv2.COLOR_BGRA2RGBA)
@@ -41,6 +38,9 @@ class CVNinjaGame(CVGame):
 
 
      def setup(self, options):
+          for object_spawner in self.objects_player_1:
+               for shape in object_spawner.pymunk_objects_to_draw:
+                    object_spawner.pymunk_objects_to_draw.remove(shape)
           self.space = pymunk.Space()
           self.space.gravity = (0, 980)
           self.players = []

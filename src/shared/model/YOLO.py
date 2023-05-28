@@ -1,12 +1,13 @@
 from ultralytics import YOLO as actual_yolo
 from shared.utils import CVAssets
 
-'''
-    YOCO (You Only Create Once)
-    A singleton class to ensure the YOLO model is only created once.
-    At the time of writing, 2 games use the YOLO enabled models.
-'''
+
 class YOLO:
+    ''' YOCO (You Only Create Once)
+    
+        A small singleton class to ensure the YOLO model is only created once.
+        At the time of writing, 2 games use the YOLO enabled models.
+    '''
     _instance = None
 
     def __new__(cls, *args, **kwargs):

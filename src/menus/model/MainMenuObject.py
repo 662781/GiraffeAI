@@ -57,7 +57,7 @@ class MainMenuObject(CVNinjaObject):
         new_position = (int(shape_piece2.body.position.x + self.image.shape[1]//2), shape_piece2.body.position.y)
         shape_piece2.body.position = new_position
 
-        shape_piece1.body.apply_impulse_at_local_point((-500, 0))
-        shape_piece2.body.apply_impulse_at_local_point((500, 0))
+        shape_piece1.body.apply_impulse_at_local_point((-200, -200))
+        shape_piece2.body.apply_impulse_at_local_point((200, 200))
 
         self.pymunk_objects_to_draw.extend([shape_piece1, shape_piece2])

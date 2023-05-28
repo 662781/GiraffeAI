@@ -1,9 +1,8 @@
-'''
-A helper class for easy reference and editing of asset paths
-'''
-class CVAssets():
 
-    # FONT
+class CVAssets():
+    """A helper class for easy reference and editing of asset paths"""
+
+    # Font
     FONT_FRUIT_NINJA = "shared/assets/go3v2.ttf"
 
     # Menu assets

@@ -39,34 +39,34 @@ class CVMainMenu(CVGame):
         
         
         self.fight_simulator_item = MainMenuObject(self.fight_simulator_image, 150)
-        self.fight_simulator_item.spawn_object(self.space, 3, position=(50,320))
+        self.fight_simulator_item.spawn_object(self.space, 4, position=(50,320))
 
         self.rock_paper_scissors_item = MainMenuObject(self.rock_paper_scissors_image, 150)
-        self.rock_paper_scissors_item.spawn_object(self.space, 4, position=(450,320))
+        self.rock_paper_scissors_item.spawn_object(self.space, 5, position=(450,320))
 
         self.game_options.extend([self.warming_up_item, self.ninja_item, self.fight_simulator_item, self.rock_paper_scissors_item])
         
         self.background = cv2.resize(self.background, (self.options["CAMERA_WIDTH"], self.options["CAMERA_WIDTH"]))
-        self.player = CVNinjaPlayer(5)
+        self.player = CVNinjaPlayer(6)
         self.space.add(self.player.line_left_hand_body, self.player.line_left_hand_shape)
         self.space.add(self.player.line_right_hand_body, self.player.line_right_hand_shape)
         self.space.add(self.player.line_left_leg_body, self.player.line_left_leg_shape)
         self.space.add(self.player.line_right_leg_body, self.player.line_right_leg_shape)
 
         # todo: dit kan makkelijker, maar ik maak dit op Zondag 03:45
-        handler = self.space.add_collision_handler(5, 1)  
+        handler = self.space.add_collision_handler(6, 1)  
         handler.data["player"] = self.player # Collision needs the player to determine extra conditions (long enough slice, used 2 hands, etc.)
         handler.begin = self.process_hit
 
-        handler = self.space.add_collision_handler(5, 2)
+        handler = self.space.add_collision_handler(6, 2)
         handler.data["player"] = self.player # Collision needs the player to determine extra conditions (long enough slice, used 2 hands, etc.)
         handler.begin = self.process_hit
 
-        handler = self.space.add_collision_handler(5, 3) 
+        handler = self.space.add_collision_handler(6, 4) 
         handler.data["player"] = self.player # Collision needs the player to determine extra conditions (long enough slice, used 2 hands, etc.)
         handler.begin = self.process_hit
 
-        handler = self.space.add_collision_handler(5, 4) 
+        handler = self.space.add_collision_handler(6, 5) 
         handler.data["player"] = self.player # Collision needs the player to determine extra conditions (long enough slice, used 2 hands, etc.)
         handler.begin = self.process_hit
 
@@ -120,14 +120,15 @@ class CVMainMenu(CVGame):
         for shape in arbiter.shapes:
             if(shape.body.body_type != pymunk.Body.KINEMATIC):
                 if(shape_trail_length > 10 and self.is_in_the_middle(self.keypoints)): 
+                    shape.parent_object.collision_aftermath(space, shape)
                     self.should_switch = True
                     if(shape.collision_type == 1):
                         self.next_game = "Warming-up"
                     elif(shape.collision_type == 2):
                         self.next_game = "CVNinja Menu"
-                    elif(shape.collision_type == 3):
-                        self.next_game = "Fight Simulator"
                     elif(shape.collision_type == 4):
+                        self.next_game = "Fight Simulator"
+                    elif(shape.collision_type == 5):
                         self.next_game = "Rock Paper Scissors"
                     else:
                         self.next_game = None

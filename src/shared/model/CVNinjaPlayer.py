@@ -6,15 +6,20 @@ from shared.utils import Generics
 
 
 class CVNinjaPlayer:
+    """Represents a player in the CV Ninja game.
+
+    The CVNinjaPlayer is primarily used as a player class for the CVNinjaGame, it gained an additional use as the player in the Menus.
+    The class tracks the limbs of the player and keeps their score.
+    Using the collected tracking, the player leaves behind 'trails' which can be used to determine whether the player performed a slashing motion. 
+
+    """
 
 
     def __init__(self, collision_type):
-        score = 0
-        spawn_time = time.time()
+        self.score = 0
 
-        # Create pymunk shapes 
         self._setup_shapes(collision_type)
-        # Init tracking
+        
         self.left_hand_track_points = []
         self.left_hand_track_lengths = []
         self.left_hand_track_current = 0

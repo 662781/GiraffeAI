@@ -11,16 +11,20 @@ from shared.utils import Generics, CVAssets
 from shared.model import CVNinjaPlayer
 from menus import CVMainMenu, CVNinjaMenu
 
-'''
+
+
+class GameManager:
+    """Manages the CVGame objects and camera feed.
+
     The GameManager controls the camera and feeds camera frames to the currently played game. 
     Each iteration it will show the image feed according to what the current game has drawn on it during the update method.
     When the switch flag is set to True, the GameManager sets a loading screen and loads the next game/menu. 
-'''
-
-class GameManager:
+    """
     # count used for overlaying a "loading screen", more info below. 
-    count = 0 
-    
+    count = 0
+    delay_duration = .5 # Delay before next game loads
+    start_time = None
+    enough_time_passed = False
     games = {
         # Put your menus on the same line as your game, for clarity 
         # Main Menu
@@ -67,13 +71,11 @@ class GameManager:
                 print("Frame not captured, exiting...")
                 break
             frame = self.current_game.update(frame)
-
-            if self.current_game.should_switch:
-                # In order to get a standard loading screen, we load in an overlay with a fake progress bar. 
-                # The count is required to make sure the frame is sent as the last frame before the games are switched (resulting in a frozen frame) 
-                if(self.count == 0 ):
+           
+            if self.current_game.should_switch and self._enough_time_passed():
+                if(self.count == 0): # We require an overlay with the progress bar to be set as the last shown frame
                     overlay = np.ones(frame.shape, dtype="uint8") * 127
-                    alpha = 0.7  # Adjust the overlay intensity (0.0 to 1.0)
+                    alpha = 0.7 
                     frame = cv2.addWeighted(frame, 1-alpha, overlay, alpha, 0)
                     frame = Generics.overlayPNG(frame,self.loading_image, [200,200] )
                     self.count = 1
@@ -84,11 +86,29 @@ class GameManager:
                         print("No new game given. Got: ", next_game)
                         break # exit entirely
                     self.switch_game(next_game)
-
+                    self.enough_time_passed = False
             cv2.imshow("CVDojo", frame)
 
         self.cap.release()
         cv2.destroyAllWindows()
+
+    def _enough_time_passed(self): # A small delay before the next screen is set to make sure player sees the menu physics
+        if self.enough_time_passed:
+            return True
+        if self.start_time is None:
+            print("Start Time not defined, creating...")
+            self.start_time = time.time()
+            return False
+
+        self.elapsed_time = time.time() - self.start_time  
+        print("Elapsed time: ", self.elapsed_time)
+        if(self.elapsed_time >= self.delay_duration):
+            print("ENOUGH TIME HAS ELAPSED")
+            self.enough_time_passed = True
+            self.start_time = None
+            return True
+        return False
+
 
 game_manager = GameManager()
 game_manager.switch_game("Main Menu")

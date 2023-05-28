@@ -81,6 +81,7 @@ class CVNinjaMenu(CVGame):
         return image
 
     def cleanup(self):
+        self.game_options = []
         super().cleanup()
 
     def process_hit(self, arbiter, space, data):
@@ -90,6 +91,7 @@ class CVNinjaMenu(CVGame):
         print("Hit with ", kinematic_shape.player_limb)
         for shape in arbiter.shapes:
             if(shape.body.body_type != pymunk.Body.KINEMATIC):
+                shape.parent_object.collision_aftermath(space, shape)
                 if(shape_trail_length > 10): 
                     self.options_next_game["NUMBER_OF_PLAYERS"] = 1
                     self.should_switch = True
