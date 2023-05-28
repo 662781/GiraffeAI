@@ -1,8 +1,11 @@
 import numpy as np
 import cv2
+from PIL import ImageFont, ImageDraw, Image
 
 class Generics():
-
+    # Predefined font workaround for custom font method
+    font = ImageFont.truetype("shared/assets/go3v2.ttf", 80)
+    
     @staticmethod
     def _create_line_function(point1, point2):
         x1, y1 = point1
@@ -60,8 +63,7 @@ class Generics():
             imgBack = cv2.bitwise_or(imgBack, imgMaskFull)
             return imgBack
         except:
-            # Other problems don't affect application performance so generic catch and pass it back 
-            #print("Error in overlay") 
+            # Other problems don't affect application performance so generic catch and pass it back
             return imgBack
 
     @staticmethod
@@ -80,13 +82,35 @@ class Generics():
     @staticmethod
     def draw_pymunk_object_in_opencv(background, pymunk_object):
         # Draw a pymunk physics object on the screen with opencv
-        vertices = [(v+pymunk_object.body.position) for v in pymunk_object.get_vertices()]
-        vertices = np.array(vertices, dtype=np.int32)
-        cv2.fillPoly(background, [vertices], (255, 255, 255))
+        #vertices = [(v+pymunk_object.body.position) for v in pymunk_object.get_vertices()]
+        #vertices = np.array(vertices, dtype=np.int32)
+        #cv2.fillPoly(background, [vertices], (255, 255, 255))
         pos = pymunk_object.body.position
         x, y = int(pos.x), int(pos.y)
         background = Generics.overlayPNG(background, pymunk_object.image, [x, y])
         return background
+
+    @staticmethod
+    def put_text_with_ninja_font(image, text, position, font_color, outline_color = (255, 255, 255), outline_width=2):
+        '''
+            Sadly, opencv does not support custom fonts without recompiling the library with the required 3rd party flags. 
+            This forces us to use PIL, which has the drawback that we can't dynamically set the font size. So we predefine it in the class.
+            If really necessary, it can be done by recreating the font altogether, but that means you reload the font (22kb) with every frame 
+        '''
+        img_pil = Image.fromarray(image)
+        draw = ImageDraw.Draw(img_pil)
+        outline_position = (50, 50)
+        draw.text(position, text, font=Generics.font, fill=font_color, stroke_width = outline_width, stroke_fill = outline_color)
+        return np.array(img_pil)
+
+    @staticmethod
+    def put_text_with_custom_font(image, text, position, font_path, font_size, font_color, outline_color = (255, 255, 255), outline_width=2):
+        img_pil = Image.fromarray(image)
+        draw = ImageDraw.Draw(img_pil)
+        font = ImageFont.truetype(font_path, font_size)
+        draw.text(position, text, font=font, fill=font_color, stroke_width = outline_width, stroke_fill = outline_color)
+        return np.array(img_pil)
+
 
 
     @staticmethod
@@ -101,6 +125,7 @@ class Generics():
         cv2.line(image, player.right_hand_track_points[-1], player.right_hand_track_points[0], (0, 0, 255), 5)
         cv2.line(image, player.right_foot_track_points[-1], player.right_foot_track_points[0], (0, 0, 255), 5)
         cv2.line(image, player.left_foot_track_points[-1], player.left_foot_track_points[0], (0, 0, 255), 5)
+
     @staticmethod
     def draw_stick_figure(image, keypoints):
         right_wrist = (int(keypoints[9][0]), int(keypoints[9][1]))

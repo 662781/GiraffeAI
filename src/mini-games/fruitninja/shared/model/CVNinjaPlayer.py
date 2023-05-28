@@ -38,24 +38,24 @@ class CVNinjaPlayer:
     def _setup_shapes(self, collision_type):
         # Initialize the shapes used in the background for collision. 
         self.line_left_hand_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
-        self.line_left_hand_shape = pymunk.Poly(self.line_left_hand_body, [(-100, 0), (100, 0)])
+        self.line_left_hand_shape = pymunk.Poly(self.line_left_hand_body, [(10000, 0), (10001, 0)])
         self.line_left_hand_shape.collision_type = collision_type
         self.line_left_hand_shape.player_limb = "left hand"
 
         self.line_right_hand_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
-        self.line_right_hand_shape = pymunk.Poly(self.line_right_hand_body, [(-1000, 0), (1000, 0)])
+        self.line_right_hand_shape = pymunk.Poly(self.line_right_hand_body, [(10000, 0), (10001, 0)])
         self.line_right_hand_shape.collision_type = collision_type
         self.line_right_hand_shape.player_limb = "right hand"
 
         # Left leg 
         self.line_left_leg_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
-        self.line_left_leg_shape = pymunk.Poly(self.line_left_leg_body, [(-10000, 0), (1000, 0)])
+        self.line_left_leg_shape = pymunk.Poly(self.line_left_leg_body, [(10000, 0), (10001, 0)])
         self.line_left_leg_shape.collision_type = collision_type
         self.line_left_leg_shape.player_limb = "left leg"
 
 
         self.line_right_leg_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
-        self.line_right_leg_shape = pymunk.Poly(self.line_right_leg_body, [(-10000, 0), (1000, 0)])
+        self.line_right_leg_shape = pymunk.Poly(self.line_right_leg_body, [(10000, 0), (10001, 0)])
         self.line_right_leg_shape.collision_type = collision_type
         self.line_right_leg_shape.player_limb = "right leg"
 

@@ -1,0 +1,1 @@
+from .FightSimulatorGame import FightSimulatorGame

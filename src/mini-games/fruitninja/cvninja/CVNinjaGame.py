@@ -1,9 +1,8 @@
 import random
 import traceback
 import cv2
-from ultralytics import YOLO
-from shared.utils import CvFpsCalc
-from shared.utils import Generics
+from shared.model import YOLO
+from shared.utils import Generics, CvFpsCalc, CVAssets
 from shared.model import CVNinjaPlayer, CVGame
 from cvninja.model import CVNinjaPlank
 import pymunk
@@ -23,31 +22,31 @@ class CVNinjaGame(CVGame):
                "wooden_plank_broken":3,
                "rock_broken":4,
           }
-          self.yolo_model = YOLO('resources/models/yolov8l-pose.pt')  # load an official model
-          self.number_of_players = 1 # todo: argument
-          self.space = pymunk.Space()
-          self.space.gravity = (0, 980)
-          self.players = []
+          self.yolo_model = YOLO(CVAssets.YOLO_MODEL_L)  # load an official model
+          
           self.background = None
           self.objects_player_1 = None
 
-          self.wood = cv2.imread('cvninja/assets/plank.png', cv2.IMREAD_UNCHANGED)
+          self.wood = cv2.imread(CVAssets.IMAGE_PLANK, cv2.IMREAD_UNCHANGED)
 
-          self.stone = cv2.imread('cvninja/assets/rock.png', cv2.IMREAD_UNCHANGED)
-          self.bomb = cv2.imread('cvninja/assets/bomb.png', cv2.IMREAD_UNCHANGED)
+          self.stone = cv2.imread(CVAssets.IMAGE_ROCK, cv2.IMREAD_UNCHANGED)
+          self.bomb = cv2.imread(CVAssets.IMAGE_BOMB, cv2.IMREAD_UNCHANGED)
 
           self.size = 70
           self.objects_player_1 = [CVNinjaPlank(self.wood, self.size)]
 
-          self.background = cv2.imread("shared/assets/dojo.png", cv2.IMREAD_UNCHANGED)
+          self.background = cv2.imread(CVAssets.IMAGE_DOJO, cv2.IMREAD_UNCHANGED)
           self.background = cv2.cvtColor(self.background, cv2.COLOR_BGRA2RGBA)
-          self.background = cv2.resize(self.background, (self.camera_width, self.camera_height))
 
 
-     def setup(self):
-          self.current_player = "none"
-          
-          for i in range(self.number_of_players):
+
+     def setup(self, options):
+          self.space = pymunk.Space()
+          self.space.gravity = (0, 980)
+          self.players = []
+          # self.current_player = "none"
+          self.options = options
+          for i in range(self.options["NUMBER_OF_PLAYERS"]):
                player = CVNinjaPlayer(self.collision_types["limbs_player_" + str(i+1)])
                self.space.add(player.line_left_hand_body, player.line_left_hand_shape)
                self.space.add(player.line_right_hand_body, player.line_right_hand_shape)
@@ -55,6 +54,7 @@ class CVNinjaGame(CVGame):
                self.space.add(player.line_right_leg_body, player.line_right_leg_shape)
                self.players.append(player)
 
+          self.background = cv2.resize(self.background, (self.options["CAMERA_WIDTH"], self.options["CAMERA_WIDTH"]))
           handler = self.space.add_collision_handler(self.collision_types["limbs_player_1"], self.collision_types["objects_player_1"])
           handler.data["player"] = self.players[0] # Collision needs the player to determine extra conditions (long enough slice, used 2 hands, etc.)
           handler.begin = self.process_hit
@@ -114,6 +114,9 @@ class CVNinjaGame(CVGame):
           return True     
 
      def cleanup(self):
+          for object_spawner in self.objects_player_1:
+               for shape in object_spawner.pymunk_objects_to_draw:
+                    object_spawner.pymunk_objects_to_draw.remove(shape)
           super().cleanup()
 
      def update(self, frame):
@@ -123,7 +126,7 @@ class CVNinjaGame(CVGame):
           image = cv2.flip(image, 1)
 
           image.flags.writeable = False  
-          results = self.yolo_model(image, max_det=self.number_of_players, verbose=False)
+          results = self.yolo_model(image, max_det=self.options["NUMBER_OF_PLAYERS"], verbose=False)
           image.flags.writeable = True  
 
           self.space.step(1/60)
@@ -135,7 +138,7 @@ class CVNinjaGame(CVGame):
           try:
                for i, result in enumerate(results):
                     keypoints = result.keypoints.cpu().numpy()[0]
-                    player_index = int(keypoints[2][0]) > (self.camera_width / self.number_of_players) 
+                    player_index = int(keypoints[2][0]) > (self.options["CAMERA_WIDTH"] / self.options["NUMBER_OF_PLAYERS"]) 
                     self.players[player_index].update_tracking(keypoints)
                     Generics.get_player_trailing(self.players[player_index], image)
                     Generics.draw_stick_figure(image, keypoints)
