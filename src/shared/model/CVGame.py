@@ -16,7 +16,6 @@ class CVGame:
         should_switch (bool): The flag on whether or not the CVGame should switch to the defined next_game
         cvFpsCalc (cvFpsCalc): An FPS utility that can be to measure general performance of the CVGame.
     """
-    
     def __init__(self):
         """Intialize CVGame with standard attributes that apply to most games"""
 
@@ -33,7 +32,7 @@ class CVGame:
 
     def setup(self, options):
         """Setup the CVGame's 'board' before it starts
-
+        
         setup() is used to set up anything the CVGame requires before starting it's loop.
 
         Args:

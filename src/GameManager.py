@@ -16,11 +16,12 @@ from menus import CVMainMenu, CVNinjaMenu, RockPaperScissorsMenu
 
 class GameManager:
     """Manages the CVGame objects and camera feed.
-
+    
     The GameManager controls the camera and feeds camera frames to the currently played game. 
     Each iteration it will show the image feed according to what the current game has drawn on it during the update method.
     When the switch flag is set to True, the GameManager sets a loading screen and loads the next game/menu. 
-
+    
+    As the game starts with GameManager, all imports are relative to the folder in which the GameManager class resides. 
     Another important feature of the GameManager is built in delay.
     This delay allows games and menus to briefly show their collision effects (menu options splitting in half) before the new game is loaded.   
 
