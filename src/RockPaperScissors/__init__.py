@@ -1,0 +1,2 @@
+from .RockPaperScissorsGame import RockPaperScissorsGame
+from .RockPaperScissorsAIGame import RockPaperScissorsAIGame

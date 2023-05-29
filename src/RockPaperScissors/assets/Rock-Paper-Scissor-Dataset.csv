@@ -1,0 +1,72 @@
+playerName,playerMove,playerWinStreak,prediction,AIMove
+Change Name,2,0,3,3
+Change Name,1,0,2,2
+Change Name,2,1,1,1
+Change Name,3,1,3,3
+Change Name,3,1,3,3
+Change Name,3,0,1,1
+Change Name,2,0,2,2
+Change Name,2,0,2,3
+Change Name,3,0,2,3
+Change Name,3,0,3,1
+Change Name,1,0,3,1
+Change Name,1,0,1,2
+Change Name,2,0,1,2
+burak,2,0,3,3
+burak,2,1,1,1
+Change Name,2,0,2,3
+Change Name,2,0,2,3
+Change Name,3,0,2,3
+Change Name,1,0,3,1
+Change Name,2,0,1,2
+Change Name,3,0,2,3
+Change Name,2,1,3,1
+Change Name,3,1,2,3
+burak,1,2,3,3
+burak,2,2,2,2
+burak,3,3,2,2
+burak,1,3,1,1
+burak,3,0,1,1
+burak,1,0,3,1
+burak,2,0,1,2
+burak,3,0,2,3
+burak,3,0,3,1
+burak,1,0,3,1
+burak,2,0,1,2
+Change Name,2,1,3,1
+Change Name,3,1,2,3
+Change Name,1,1,3,1
+Change Name,3,2,1,2
+Change Name,1,2,3,1
+Change Name,1,0,1,2
+Change Name,3,1,1,2
+Change Name,2,1,3,1
+Change Name,3,1,2,3
+Change Name,1,1,3,1
+Change Name,3,2,1,2
+Change Name,2,1,3,1
+Change Name,3,1,2,3
+Change Name,1,1,3,1
+Change Name,1,0,1,2
+Change Name,2,0,1,2
+Change Name,3,0,2,3
+Change Name,2,1,3,1
+Change Name,2,0,2,3
+tim sanou,2,0,2,2
+tim sanou,3,0,3,3
+tim sanou,2,1,1,1
+tim sanou,3,1,3,3
+tim sanou,1,2,3,3
+tim sanou,3,3,2,2
+tim sanou,2,3,2,2
+tim sanou,3,3,2,3
+tim sanou,2,4,3,1
+tim sanou,3,4,2,3
+tim sanou,2,5,3,1
+tim sanou,3,5,2,3
+tim sanou,2,6,3,1
+tim sanou,3,6,2,3
+tim sanou,1,6,3,1
+tim sanou,,6,1,2
+Change Name,3,0,2,3
+Change Name,,0,3,1
