@@ -5,11 +5,12 @@ import numpy as np
 from cvninja import CVNinjaGame
 from fightsimulator import FightSimulatorGame
 from RockPaperScissors import RockPaperScissorsGame
+from RockPaperScissors import RockPaperScissorsAIGame
 from WarmingUp import WarmingUpGame
 
 from shared.utils import Generics, CVAssets
 from shared.model import CVNinjaPlayer
-from menus import CVMainMenu, CVNinjaMenu
+from menus import CVMainMenu, CVNinjaMenu, RockPaperScissorsMenu
 
 
 
@@ -19,6 +20,16 @@ class GameManager:
     The GameManager controls the camera and feeds camera frames to the currently played game. 
     Each iteration it will show the image feed according to what the current game has drawn on it during the update method.
     When the switch flag is set to True, the GameManager sets a loading screen and loads the next game/menu. 
+
+    Another important feature of the GameManager is built in delay.
+    This delay allows games and menus to briefly show their collision effects (menu options splitting in half) before the new game is loaded.   
+
+    Attributes:
+        games (Dict[str, CVGame]): list of CVGame object callable by a key string.
+        count (int): Used as a way of setting up the loading screen by checking for changes in count.
+        start_time (time): Set when a game is switched to help check if the delay_duration is reached.
+        delay_duration (float): The amount of delay in seconds until the next game is setup.
+        enough_time_passed (bool): Used to ensure the delay requirement is met before switching games.
     """
     # count used for overlaying a "loading screen", more info below. 
     count = 0
@@ -27,14 +38,13 @@ class GameManager:
     enough_time_passed = False
     games = {
         # Put your menus on the same line as your game, for clarity 
-        # Main Menu
         "Main Menu": CVMainMenu(),
-        # CVNinja
+
         "CVNinja": CVNinjaGame(), "CVNinja Menu": CVNinjaMenu(),
-        # 
+
         "Fight Simulator": FightSimulatorGame(),
 
-        "Rock Paper Scissors": RockPaperScissorsGame(),
+        "Rock Paper Scissors": RockPaperScissorsGame(), "Rock Paper Scissors AI": RockPaperScissorsAIGame(), "Rock Paper Scissors Menu": RockPaperScissorsMenu(),
 
         "Warming-up": WarmingUpGame()
     }

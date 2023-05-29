@@ -1,23 +1,74 @@
-from shared.utils import Generics
-from shared.model import CVGame
+import random
 import cv2
+from cvzone.HandTrackingModule import HandDetector
+import time
+from RockPaperScissors.model import game_utils
+
+from shared.model import CVGame
+
 
 class RockPaperScissorsGame(CVGame):
     def __init__(self):
         super().__init__()
 
     def setup(self, options):
-        self.options = options
-    
-    def update(self, camera_image):
-        height, width, _ = camera_image.shape
-        image = cv2.flip(camera_image, 1)
+        self.detectorLeft = HandDetector(maxHands=1)
+        self.detectorRight = HandDetector(maxHands=1)
+        self.scores = [0, 0]  # [PlayerLeft, PlayerRight]
+        self.startGame = False
+        self.timer = 0
+        self.stateResult = False
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        self.player1 = "Player 1"
+        self.player2 = "Player 2" # Default names
+        self.active_player = None
+
+        #self.options = options
+    
+    def update(self, frame):
+        # Split the frame in two
+        height, width = frame.shape[:2]
+        half_width = int(width/2)
+
+        left_frame = frame[:, :half_width]
+        right_frame = frame[:, half_width:]
+
+        handLeft, frame = self.detectorLeft.findHands(left_frame)  # with draw
+        handRight, frame = self.detectorRight.findHands(right_frame)  # with draw
+
+
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'):
             self.should_switch = True
             self.next_game = "Main Menu"
 
-        return Generics.put_text_with_ninja_font(image, self.__class__.__name__ +"\nComing Soon!\nPress 'q'\nto Return to\nMain Menu",(10, 10),(0, 0, 0))  
+        if handLeft and handRight:
+            fingersLeft = self.detectorLeft.fingersUp(handLeft[0])
+            fingersRight = self.detectorRight.fingersUp(handRight[0])
+            if fingersLeft == [1, 0, 0, 0, 0] and fingersRight == [1, 0, 0, 0, 0]:
+                self.startGame = True
+                self.initialTime = time.time()
+                self.stateResult = False
+
+        if self.startGame:
+
+            if self.stateResult is False:
+                self.timer = time.time() - self.initialTime
+
+                if self.timer > 3:
+                    self.stateResult = True
+                    self.timer = 0
+
+                    if handLeft and handRight:
+
+                        # Get player move
+                        playerLeftMove, playerLeftMoveName, playerRightMove, playerRightMoveName = game_utils.get_players_move(handLeft, self.detectorLeft, self.player1, handRight, self.detectorRight, self.player2)
+                        self.scores = game_utils.calculate_results_against_players(playerLeftMove, playerRightMove, self.scores, self.player2, self.player1)
+
+                    else:
+                        print("One or both hands were not detected!")
+        return game_utils.draw_ui_against_players(self.scores, left_frame, right_frame, half_width, height) 
 
     def cleanup(self):
         super().cleanup()
