@@ -47,7 +47,7 @@ class GameManager:
 
         "Rock Paper Scissors": RockPaperScissorsGame(), "Rock Paper Scissors AI": RockPaperScissorsAIGame(), "Rock Paper Scissors Menu": RockPaperScissorsMenu(),
 
-        "Warming-up": WarmingUpGame()
+        "Warming Up": WarmingUpGame()
     }
     def __init__(self):
         self.current_game = None
@@ -122,5 +122,5 @@ class GameManager:
 
 
 game_manager = GameManager()
-game_manager.switch_game("Main Menu")
+game_manager.switch_game("Warming Up")
 game_manager.run()
