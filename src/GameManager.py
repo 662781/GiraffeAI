@@ -2,10 +2,10 @@ import cv2
 import time
 import numpy as np
 
-from cvninja import CVNinjaGame
-from fightsimulator import FightSimulatorGame
-from RockPaperScissors import RockPaperScissorsGame
-from RockPaperScissors import RockPaperScissorsAIGame
+# from cvninja import CVNinjaGame
+# from fightsimulator import FightSimulatorGame
+# from RockPaperScissors import RockPaperScissorsGame
+# from RockPaperScissors import RockPaperScissorsAIGame
 from WarmingUp import WarmingUpGame
 
 from shared.utils import Generics, CVAssets
@@ -39,13 +39,13 @@ class GameManager:
     enough_time_passed = False
     games = {
         # Put your menus on the same line as your game, for clarity 
-        "Main Menu": CVMainMenu(),
+        # "Main Menu": CVMainMenu(),
 
-        "CVNinja": CVNinjaGame(), "CVNinja Menu": CVNinjaMenu(),
+        # "CVNinja": CVNinjaGame(), "CVNinja Menu": CVNinjaMenu(),
 
-        "Fight Simulator": FightSimulatorGame(),
+        # "Fight Simulator": FightSimulatorGame(),
 
-        "Rock Paper Scissors": RockPaperScissorsGame(), "Rock Paper Scissors AI": RockPaperScissorsAIGame(), "Rock Paper Scissors Menu": RockPaperScissorsMenu(),
+        # "Rock Paper Scissors": RockPaperScissorsGame(), "Rock Paper Scissors AI": RockPaperScissorsAIGame(), "Rock Paper Scissors Menu": RockPaperScissorsMenu(),
 
         "Warming Up": WarmingUpGame()
     }

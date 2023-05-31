@@ -50,7 +50,7 @@ class KeyPointClassifier(object):
                 if i == index:
                     pred_class = c
             # Draw the predicted class on the CV window
-            ann.text(xy, pred_class)
+            ann.text(xy, pred_class, txt_color=(0, 0, 0))
 
     """
     Returns a boolean; checks if the model path exists

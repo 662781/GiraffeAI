@@ -81,8 +81,8 @@ class WarmingUpGame(CVGame):
 
         # Draw the keypoints (only for testing) and add class name to visualize the current detected pose of all players in the CV window
         # Draws the bounding box & keypoints from the YOLOv8 model
-        annotated_frame = results.plot()
-        # annotated_frame = frame
+        # annotated_frame = results.plot()
+        annotated_frame = frame
         
         # Get the keypoints in a easier iterable list
         # Shape when 1 person is detected: [[x, y, conf], ..]
