@@ -252,6 +252,27 @@ class Generics():
         cv2.line(image, player.left_foot_track_points[-1], player.left_foot_track_points[0], (0, 0, 255), 5)
 
     @staticmethod
+    def determine_collision_side(object_pos, collision_pos):
+        object_x, object_y = object_pos
+        collision_x, collision_y = collision_pos
+
+        # Calculate the difference between object position and collision point
+        diff_x = collision_x - object_x
+        diff_y = collision_y - object_y
+
+        # Determine the side of collision based on the differences
+        if abs(diff_x) > abs(diff_y):
+            if diff_x > 0:
+                return 'right'
+            else:
+                return 'left'
+        else:
+            if diff_y > 0:
+                return 'bottom'
+            else:
+                return 'top'
+
+    @staticmethod
     def draw_stick_figure(image, keypoints):
         # Draws a stick figure
 
