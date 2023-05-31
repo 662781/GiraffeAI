@@ -12,54 +12,24 @@ class CVNinjaPlank(CVNinjaObject):
     
     def _get_images_vertices(self):
         super()._get_images_vertices()
-        # Cut image diagonally 
-        diagonal_splice_left = np.zeros_like(self.image, dtype=np.uint8)
-        diagonal_splice_right = np.zeros_like(self.image, dtype=np.uint8)
-        for i in range(self.size):
-            diagonal_splice_right[i, :self.size-i] = self.image[i, :self.size-i]
-            diagonal_splice_left[i, self.size-i:] = self.image[i, self.size-i:]
-        # images_vertices for diagonal image split
-        self.images_vertices["DIAGONAL_SPLICE_LEFT"] =  (diagonal_splice_left, Generics.get_vertices_by_image(diagonal_splice_left))
-        self.images_vertices["DIAGONAL_SPLICE_RIGHT"] = (diagonal_splice_right, Generics.get_vertices_by_image(diagonal_splice_right))
-        
-        # images_vertices for vertical image split
-        horizontal_splice_left =  self.image[:,:self.size//2]
-        horizontal_splice_right = self.image[:,self.size//2:]
-
-        self.images_vertices["HORIZONTAL_SPLICE_LEFT"]  = (horizontal_splice_left,Generics.get_vertices_by_image(horizontal_splice_left))
-        self.images_vertices["HORIZONTAL_SPLICE_RIGHT"] = (horizontal_splice_right,Generics.get_vertices_by_image(horizontal_splice_right))
+        # Custom variables for particular cuts of the wooden plank
+        self.broken_images_horizontal = self._get_spliced_image_vertices_combo(2)
+        self.broken_images_diagonal = self._get_spliced_image_vertices_combo(1, True)
     
     def collision_aftermath(self, space, shape, contact_point = (0,0)):
         # ignore contact point for now
-
-        # remove the collided "whole" object from draw list
         self.pymunk_objects_to_draw.remove(shape) 
 
-        # take the cut object and set it to spawn 
-        body = pymunk.Body(1, 100)
-        shape_piece1 = pymunk.Poly(body, self.images_vertices["HORIZONTAL_SPLICE_LEFT"][1])
-        shape_piece1.image = self.images_vertices["HORIZONTAL_SPLICE_LEFT"][0]
-        shape_piece1.parent_object = self
-        
-        body = pymunk.Body(1, 100)
-        shape_piece2 = pymunk.Poly(body, self.images_vertices["HORIZONTAL_SPLICE_RIGHT"][1])
-        shape_piece2.image = self.images_vertices["HORIZONTAL_SPLICE_RIGHT"][0]
-        shape_piece2.parent_object = self
-
-        shape_piece1.collision_type = 3 #collision_types["broken_objects"]
-        shape_piece2.collision_type = 3 #collision_types["broken_objects"]
-
-        space.add(shape_piece1, shape_piece1.body)
-        space.add(shape_piece2, shape_piece2.body)
-
-        shape_piece1.body.position = shape.body.position
-        shape_piece2.body.position = shape.body.position
-
-        # set cut wood part in correct place 
-        new_position = (int(shape_piece2.body.position.x + self.image.shape[1]//2), shape_piece2.body.position.y)
-        shape_piece2.body.position = new_position
-
-        shape_piece1.body.apply_impulse_at_local_point((-500, 0))
-        shape_piece2.body.apply_impulse_at_local_point((500, 0))
-
-        self.pymunk_objects_to_draw.extend([shape_piece1, shape_piece2])
+        broken_pymunk_objects = []
+        for piece in self.broken_images_horizontal:
+            body = pymunk.Body(1, 100)
+            shape_piece = pymunk.Poly(body, piece[1])
+            shape_piece.image = piece[0]
+            shape_piece.parent_object = self
+            shape_piece.body.position = shape.body.position
+            space.add(shape_piece, shape_piece.body)
+            broken_pymunk_objects.append(shape_piece)
+        # Apply some force to make it seam like the cut did something
+        broken_pymunk_objects[0].body.apply_impulse_at_local_point((-250, 0))
+        broken_pymunk_objects[1].body.apply_impulse_at_local_point((250, 0))
+        self.pymunk_objects_to_draw.extend(broken_pymunk_objects)

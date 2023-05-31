@@ -94,3 +94,55 @@ class CVNinjaObject():
         space.add(shape, body)
         shape.image = self.image
         self.pymunk_objects_to_draw.append(shape)
+
+    def _get_spliced_image_vertices_combo(self, amount_of_slices: int = 2, start_diagonally: bool = False):
+        """Helper method to calculate to get the sliced images and their vertices in one array
+           Originally we setup pieces of the image by cutting them out of the image and adjusting the position of the pieces relative
+            to where the cut was made.
+           Now we figured out that by keeping the original image size with zeros copy, we can put the part of the image on it,
+           and now the original position can stay the same, which saves a lot of headaches calculating new postions. 
+        
+        Args:
+            amount_of_slices (int): The amount of slices of the object you want to have
+
+            start_diagonally (bool): Tell the function to first cut the object in two diagonally (bottom left to top right). 
+                                     This will result in double the amount_of_slices you request: 2 slices will result in 4 etc. 
+        """
+        results = []
+        height = self.image.shape[0]
+        width = self.image.shape[1]
+        # Depending on whether we start diagonal or not, we use either the width (shape[1]) or height (shape[0])
+        
+        slice_metric = height // amount_of_slices
+        base_images = [self.image]
+        if start_diagonally:
+            # An initial 
+            diagonal_splice_left = np.zeros_like(self.image, dtype=np.uint8)
+            diagonal_splice_right = np.zeros_like(self.image, dtype=np.uint8)
+            for i in range(self.size):
+                diagonal_splice_left[i, :self.size-i] = self.image[i, :self.size-i]
+                diagonal_splice_right[i, self.size-i:] = self.image[i, self.size-i:]
+            base_images = [diagonal_splice_left, diagonal_splice_right]
+        
+            for base_image in base_images: # if only image, 
+                horizontal_slice = np.zeros_like(base_image, dtype=np.uint8)
+
+                for i in range(amount_of_slices):
+                    start_row = i * slice_metric
+                    end_row = (i + 1) * slice_metric
+                    horizontal_slice[start_row:end_row, :] = base_image[start_row:end_row, :]
+                    results.append((horizontal_slice, Generics.get_vertices_by_image(horizontal_slice)))
+        else:
+            slice_width = width // amount_of_slices
+            for i in range(0, width, slice_width):
+                vertical_slice = np.zeros_like(self.image, dtype=np.uint8)
+                # Calculate the start and end coordinates of the slice
+                start_x = i
+                end_x = i + slice_width
+
+                # Extract the slice from the image
+                vertical_slice[:, start_x:end_x, :] = self.image[:, start_x:end_x, :]
+                results.append((vertical_slice, Generics.get_vertices_by_image(vertical_slice)))
+
+        return results
+            
