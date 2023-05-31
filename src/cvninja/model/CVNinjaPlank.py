@@ -18,12 +18,22 @@ class CVNinjaPlank(CVNinjaObject):
     
     def collision_aftermath(self, space, shape, contact_point = (0,0)):
         # ignore contact point for now
-        self.pymunk_objects_to_draw.remove(shape) 
-
+        try:
+            self.pymunk_objects_to_draw.remove(shape) 
+        except:
+            raise RuntimeError("Object was already removed, possibly due to double collision.")
+        
+        
+        collision_side = Generics.determine_collision_side(shape.body.position, contact_point)
+        if(collision_side == "bottom"):
+            chosen_splice = self.broken_images_diagonal
+        else:
+            chosen_splice = self.broken_images_horizontal
         broken_pymunk_objects = []
-        for piece in self.broken_images_horizontal:
+        for piece in chosen_splice:
             body = pymunk.Body(1, 100)
             shape_piece = pymunk.Poly(body, piece[1])
+            shape_piece.collision_type = 3
             shape_piece.image = piece[0]
             shape_piece.parent_object = self
             shape_piece.body.position = shape.body.position
