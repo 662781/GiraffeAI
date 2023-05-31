@@ -17,6 +17,7 @@ class CVNinjaPlayer:
 
     def __init__(self, collision_type):
         self.score = 0
+        self.strikes = 0 # Ammount of strikes, at 3 it's game over. 
 
         self._setup_shapes(collision_type)
         
