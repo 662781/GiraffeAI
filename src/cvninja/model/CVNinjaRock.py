@@ -27,6 +27,14 @@ class CVNinjaRock(CVNinjaObject):
             # Else it is done with a foot, which is always allowed
             return True
 
+    def spawn_object(self, space, collision_type, position=(0,700)):
+        target = super().spawn_object(space, collision_type, position)
+        if(position[0] < 0):
+            target.body.apply_impulse_at_local_point((250, -150))
+        else:
+            target.body.apply_impulse_at_local_point((-250, -150))
+
+        # calls super, but adds some force depending on the positions
     
     def collision_aftermath(self, space, shape, contact_point = (0,0)):
         # remove the collided "whole" object from draw list

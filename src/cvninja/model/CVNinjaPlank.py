@@ -16,6 +16,17 @@ class CVNinjaPlank(CVNinjaObject):
         self.broken_images_horizontal = self._get_spliced_image_vertices_combo(2)
         self.broken_images_diagonal = self._get_spliced_image_vertices_combo(1, True)
     
+    def spawn_object(self, space, collision_type, position=(0,700)):
+        
+        target = super().spawn_object(space, collision_type, position)
+        if(position[0] < 0):
+            target.body.apply_impulse_at_local_point((250, -150))
+        else:
+            target.body.apply_impulse_at_local_point((-250, -150))
+
+
+        # calls super, but adds some force depending on the positions
+
     def collision_aftermath(self, space, shape, contact_point = (0,0)):
         # ignore contact point for now
         try:
@@ -43,3 +54,4 @@ class CVNinjaPlank(CVNinjaObject):
         broken_pymunk_objects[0].body.apply_impulse_at_local_point((-250, 0))
         broken_pymunk_objects[1].body.apply_impulse_at_local_point((250, 0))
         self.pymunk_objects_to_draw.extend(broken_pymunk_objects)
+    

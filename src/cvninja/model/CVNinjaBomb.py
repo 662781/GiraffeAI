@@ -15,7 +15,16 @@ class CVNinjaBomb(CVNinjaObject):
         super()._get_images_vertices()
         # Custom variables for particular cuts of the wooden plank
         self.broken_images_shrapnel = self._get_spliced_image_vertices_combo(4, True)
-    
+        
+    def spawn_object(self, space, collision_type, position=(0,700)):
+        target = super().spawn_object(space, collision_type, position)
+        if(position[0] < 0):
+            target.body.apply_impulse_at_local_point((250, -150))
+        else:
+            target.body.apply_impulse_at_local_point((-250, -150))
+
+        # calls super, but adds some force depending on the positions
+
     def collision_aftermath(self, space, shape, contact_point = (0,0)):
         # ignore contact point for now
         try:
