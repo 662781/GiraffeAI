@@ -84,7 +84,7 @@ class CVNinjaObject():
             position (Tuple[float,float]): The position of the object (default: (50, 50)).
             
         Returns:
-            None
+            The pymunk_shape that was spawned 
         """
         body = pymunk.Body(1, 100)
         body.position = position
@@ -96,6 +96,8 @@ class CVNinjaObject():
         shape.image = self.image
         shape.spawn_time= time.time()
         self.pymunk_objects_to_draw.append(shape)
+        # optional return of the object
+        return shape
 
     def collision_requirements_are_met(self, player = None, collided_shape = None):
         """Used by an child object to set their own requirements before the object hit is valid"""
@@ -154,7 +156,6 @@ class CVNinjaObject():
                     end_row = (i + 1) * slice_metric
                     horizontal_slice[start_row:end_row, :] = base_image[start_row:end_row, :]
                     results.append((horizontal_slice, Generics.get_vertices_by_image(horizontal_slice)))
-                    print(i+1, " Finished")
         else:
             slice_width = width // amount_of_slices
             for i in range(0, width, slice_width):
