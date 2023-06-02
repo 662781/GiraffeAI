@@ -1,7 +1,7 @@
-import src.shared.utils.generics as Generics
+import shared.utils.generics as Generics
 import cv2
 
-from src.shared.model import CVGame
+from shared.model import CVGame
 import time
 import cv2
 import mediapipe as mp
