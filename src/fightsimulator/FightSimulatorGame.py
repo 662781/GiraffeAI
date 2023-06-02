@@ -1,13 +1,11 @@
-import shared.utils.generics as Generics
-import cv2
-
-from shared.model import CVGame
 import time
 import cv2
 import mediapipe as mp
 import numpy as np
 import math
 import random
+
+from shared.model import CVGame
 from shared.utils import Generics, CVAssets
 
 mp_drawing = mp.solutions.drawing_utils
@@ -17,19 +15,9 @@ mp_pose = mp.solutions.pose
 class FightSimulatorGame(CVGame):
     def __init__(self):
         super().__init__()
-        self.video_capture = None
-        self.mp_drawing = None
-        self.mp_pose = None
-        self.pose_model = None
-        self.number_of_players = 1
-        self.players = []
-
-    def setup(self, options):
-        self.options = options
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_pose = mp.solutions.pose
         self.pose_model = self.mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
-        self.video_capture = cv2.VideoCapture(0)
         self.number_of_players = 1
         self.players = []
         self.min_visiblity = 0.5
@@ -41,12 +29,18 @@ class FightSimulatorGame(CVGame):
         self.selected_punch = "jab"
         self.elapsed_time = 0
         self.start_time = time.time()
+        self.video_capture = cv2.VideoCapture(0)
+
+    def setup(self, options):
+        self.options = options
+
 
     def update(self, frame):
         self.create_players()
 
         image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         landmarks = self.pose_model.process(image)
+
 
         if landmarks.pose_landmarks is not None:
             left_shoulder_xy, left_elbow_xy, left_wrist_xy, left_wrist_visibility, left_elbow_visibility = self.get_landmarks(
@@ -65,17 +59,15 @@ class FightSimulatorGame(CVGame):
 
             self.elapsed_time = time.time() - self.start_time
 
-            if cv2.waitKey(1) & 0xFF == ord('q') or self.elapsed_time > 90:
+            if cv2.waitKey(1) & 0xFF == ord('q') or self.elapsed_time > 95:
                 self.should_switch = True
                 self.next_game = None
 
         return self.draw_on_frame(image=image, angle=angle, left_elbow_xy=left_elbow_xy, results=landmarks,
                                   player=self.players[0])
 
-
     def cleanup(self):
         super().cleanup()
-
 
     class Player:
         def __init__(self):
@@ -213,7 +205,8 @@ class FightSimulatorGame(CVGame):
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2, cv2.LINE_AA)
 
         # put the selected_punch on the screen in the middle
-        image = Generics.put_text_with_custom_font(image=image, text=f"punch: {self.selected_punch}", position=(220, 80),
+        image = Generics.put_text_with_custom_font(image=image, text=f"punch: {self.selected_punch}",
+                                                   position=(220, 80),
                                                    font_path=CVAssets.FONT_FRUIT_NINJA, font_size=35,
                                                    font_color=(248, 210, 62), outline_color=(0, 0, 0), outline_width=2)
 
@@ -222,7 +215,7 @@ class FightSimulatorGame(CVGame):
                                                    font_size=30, font_color=(205, 127, 50), outline_color=(0, 0, 0),
                                                    outline_width=2)
 
-        image = Generics.put_text_with_custom_font(image=image, text=f"time left: {91 - self.elapsed_time:.0f}",
+        image = Generics.put_text_with_custom_font(image=image, text=f"time left: {94 - self.elapsed_time:.0f}",
                                                    position=(420, 10), font_path=CVAssets.FONT_FRUIT_NINJA,
                                                    font_size=30, font_color=(205, 127, 50), outline_color=(0, 0, 0),
                                                    outline_width=2)
@@ -251,12 +244,3 @@ class FightSimulatorGame(CVGame):
                 cv2.line(image, tuple(player.left_hand_track_points[i - 1][0]),
                          tuple(player.left_hand_track_points[i][0]),
                          color, 3)
-
-    # def main_loop(self):
-    #
-    #
-    #         if cv2.waitKey(1) & 0xFF == ord('q') or self.elapsed_time > 90:
-    #             break
-    #
-    #     self.video_capture.release()
-    #     cv2.destroyAllWindows()
