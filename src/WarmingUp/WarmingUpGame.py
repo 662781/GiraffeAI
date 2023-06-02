@@ -134,8 +134,8 @@ class WarmingUpGame(CVGame):
 
                 # Start keeping score of the chosen exercise for each player. Add the score to each players total.
                 for player in self.players_list:
-                    pprint.pprint(player.poses_hist)
-                    print(player.score)
+                    # pprint.pprint(player.poses_hist)
+                    # print(player.score)
                     if(player.does_exercise(self.exercise, pred_class) == True):
                         player.score += 1
             else:
@@ -145,6 +145,7 @@ class WarmingUpGame(CVGame):
         ui = UIService(annotated_frame)
 
         # Load the game-UI in the CV window
+        ui.draw_buttons()
 
         # Put the score of each player in the CV window
         # This puts the score of 1 player on the screen
