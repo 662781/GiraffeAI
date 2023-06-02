@@ -30,6 +30,8 @@ class FightSimulatorGame(CVGame):
         self.elapsed_time = 0
         self.start_time = time.time()
         self.video_capture = cv2.VideoCapture(0)
+        self.combined_points = 0
+        self.previous_combined_points = -1
 
     def setup(self, options):
         self.options = options
@@ -41,6 +43,7 @@ class FightSimulatorGame(CVGame):
         image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         landmarks = self.pose_model.process(image)
 
+        self.check_and_select_punch()
 
         if landmarks.pose_landmarks is not None:
             left_shoulder_xy, left_elbow_xy, left_wrist_xy, left_wrist_visibility, left_elbow_visibility = self.get_landmarks(
@@ -84,6 +87,14 @@ class FightSimulatorGame(CVGame):
 
             self.points = 0
             self.spawn_time = time.time()
+
+    def check_and_select_punch(self):
+        if self.elapsed_time % 5 <= 0.13:
+            self.select_random_punch()
+
+        if self.combined_points != self.previous_combined_points:
+            self.select_random_punch()
+            self.previous_combined_points = self.combined_points
 
     def select_random_punch(self):
         punch_types = ["jab", "uppercut", "hook"]
@@ -177,6 +188,7 @@ class FightSimulatorGame(CVGame):
                 print("uppercut")
                 if self.selected_punch == "uppercut":
                     player.points += 1
+                    self.combined_points += 1
                 self.uppercut_timer = 0
             else:
                 self.uppercut_timer += time.time() - self.uppercut_timer
@@ -188,6 +200,7 @@ class FightSimulatorGame(CVGame):
             if self.hook_timer >= 0.1:
                 if self.selected_punch == "hook":
                     player.points += 1
+                    self.combined_points += 1
                 self.hook_timer = 0
             else:
                 self.hook_timer += time.time() - self.hook_timer
@@ -199,6 +212,7 @@ class FightSimulatorGame(CVGame):
             print("jab")
             if self.selected_punch == "jab":
                 player.points += 1
+                self.combined_points += 1
 
     def draw_on_frame(self, image, angle, left_elbow_xy, results, player):
         cv2.putText(image, str(angle), tuple(np.multiply(left_elbow_xy, [640, 480]).astype(int)),
