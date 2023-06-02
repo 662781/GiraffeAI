@@ -1,5 +1,6 @@
-from shared.utils import Generics
+from shared.utils import Generics, CVAssets
 from shared.model import CVNinjaObject
+from playsound import playsound
 
 import numpy as np
 import pymunk
@@ -28,7 +29,7 @@ class CVNinjaRock(CVNinjaObject):
             return True
 
     def spawn_object(self, space, collision_type, position=(0,700)):
-        target = super().spawn_object(space, collision_type, position)
+        target = super().spawn_object(space, collision_type, position, play_sound = True)
         if(position[0] < 0):
             target.body.apply_impulse_at_local_point((250, -150))
         else:
@@ -42,6 +43,8 @@ class CVNinjaRock(CVNinjaObject):
             self.pymunk_objects_to_draw.remove(shape) 
         except:
             raise RuntimeError("Object was already removed, possibly due to double collision.")
+
+        playsound("cvninja/assets/smash.mp3", block=False)
 
         space.remove(shape, shape.body)
         broken_pymunk_objects = []

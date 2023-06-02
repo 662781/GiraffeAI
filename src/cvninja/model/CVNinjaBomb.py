@@ -1,6 +1,6 @@
-from shared.utils import Generics
+from shared.utils import Generics, CVAssets
 from shared.model import CVNinjaObject
-
+from playsound import playsound
 import numpy as np
 import pymunk
 import random
@@ -16,8 +16,10 @@ class CVNinjaBomb(CVNinjaObject):
         # Custom variables for particular cuts of the wooden plank
         self.broken_images_shrapnel = self._get_spliced_image_vertices_combo(4, True)
         
-    def spawn_object(self, space, collision_type, position=(0,700)):
-        target = super().spawn_object(space, collision_type, position)
+    def spawn_object(self, space, collision_type, position=(0,700), play_sound = True):
+        target = super().spawn_object(space, collision_type, position, play_sound = False)
+        playsound(CVAssets.AUDIO_BOMB_HISSING, block = False)
+        ## todo: bomb sound
         if(position[0] < 0):
             target.body.apply_impulse_at_local_point((250, -150))
         else:
@@ -31,7 +33,7 @@ class CVNinjaBomb(CVNinjaObject):
             self.pymunk_objects_to_draw.remove(shape) 
         except:
             raise RuntimeError("Object was already removed, possibly due to double collision.")
-        
+        playsound(CVAssets.AUDIO_EXPLOSION,block = False)
         broken_pymunk_objects = []
         for piece in self.broken_images_shrapnel:
             body = pymunk.Body(1, 100)

@@ -1,5 +1,6 @@
-from shared.utils import Generics
+from shared.utils import Generics, CVAssets
 from shared.model import CVNinjaObject
+from playsound import playsound
 
 import numpy as np
 import pymunk
@@ -18,7 +19,7 @@ class CVNinjaPlank(CVNinjaObject):
     
     def spawn_object(self, space, collision_type, position=(0,700)):
         
-        target = super().spawn_object(space, collision_type, position)
+        target = super().spawn_object(space, collision_type, position, play_sound = True)
         if(position[0] < 0):
             target.body.apply_impulse_at_local_point((250, -150))
         else:
@@ -34,6 +35,7 @@ class CVNinjaPlank(CVNinjaObject):
         except:
             raise RuntimeError("Object was already removed, possibly due to double collision.")
         
+        playsound(CVAssets.AUDIO_PLANK_CUT, block=False)
         
         collision_side = Generics.determine_collision_side(shape.body.position, contact_point)
         if(collision_side == "bottom"):

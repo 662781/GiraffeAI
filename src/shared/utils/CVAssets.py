@@ -13,6 +13,7 @@ class CVAssets():
     IMAGE_MENU_CVNINJA = "menus/assets/Menu-Item-CVNinja.png"
     IMAGE_MENU_CVNINJA_START = "menus/assets/CVNinja-Start.png"
     
+    
     ## Warming up
     IMAGE_MENU_WARMING_UP = "menus/assets/Menu-Item-Warming-up.png"
     
@@ -30,12 +31,17 @@ class CVAssets():
     IMAGE_PLANK = "cvninja/assets/plank.png"
     IMAGE_ROCK = "cvninja/assets/rock.png"
     IMAGE_WOOD = "cvninja/assets/wood.png"
+    AUDIO_ROCK_SMASH = "cvninja/assets/smash.mp3"
+    AUDIO_PLANK_CUT = "cvninja/assets/slash.mp3"
+    AUDIO_OBJECT_SPAWN = "cvninja/assets/spawn.mp3"
+    AUDIO_EXPLOSION = "cvninja/assets/explosion.mp3"
+    AUDIO_BOMB_HISSING = "cvninja/assets/bomb-hissing.mp3"
 
     # RockPaperScissors assets
     CSV_ROCK_PAPER_SCISSORS = "RockPaperScissors/assets/Rock-Paper-Scissor-Dataset.csv"
 
 
     # Shared assets
-    YOLO_MODEL_L = "shared/assets/yolov8l-pose.pt"
+    YOLO_MODEL_L = "shared/assets/yolov8s-pose.pt"
     IMAGE_DOJO = "shared/assets/dojo.png"
     IMAGE_LOADING = "shared/assets/loading.png"

@@ -1,8 +1,10 @@
 import cv2
-from shared.utils import Generics
+from shared.utils import Generics, CVAssets
 import pymunk
 import numpy as np
 import time
+from playsound import playsound
+
 
 '''
 The goal of this object is to be created once and used constantly (at random), primarily for the CVNinja game
@@ -71,7 +73,7 @@ class CVNinjaObject():
         """
         self.images_vertices["WHOLE"] = (self.image, Generics.get_vertices_by_image(self.image))
 
-    def spawn_object(self, space, collision_type, position=(50,50)):
+    def spawn_object(self, space, collision_type, position=(50,50), play_sound = False):
         """Spawn an object and append it to the list of objects to be drawn.
 
         This method spawns a physics object in the given pymunk space with the specified
@@ -96,6 +98,8 @@ class CVNinjaObject():
         shape.image = self.image
         shape.spawn_time= time.time()
         self.pymunk_objects_to_draw.append(shape)
+        if play_sound:
+            playsound(CVAssets.AUDIO_OBJECT_SPAWN, block = False)
         # optional return of the object
         return shape
 
