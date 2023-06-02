@@ -13,7 +13,6 @@ from shared.model import CVNinjaPlayer
 from menus import CVMainMenu, CVNinjaMenu, RockPaperScissorsMenu
 
 
-
 class GameManager:
     """Manages the CVGame objects and camera feed.
     
@@ -34,7 +33,7 @@ class GameManager:
     """
     # count used for overlaying a "loading screen", more info below. 
     count = 0
-    delay_duration = .5 # Delay before next game loads
+    delay_duration = .5  # Delay before next game loads
     start_time = None
     enough_time_passed = False
     games = {
@@ -45,10 +44,12 @@ class GameManager:
 
         "Fight Simulator": FightSimulatorGame(),
 
-        "Rock Paper Scissors": RockPaperScissorsGame(), "Rock Paper Scissors AI": RockPaperScissorsAIGame(), "Rock Paper Scissors Menu": RockPaperScissorsMenu(),
+        "Rock Paper Scissors": RockPaperScissorsGame(), "Rock Paper Scissors AI": RockPaperScissorsAIGame(),
+        "Rock Paper Scissors Menu": RockPaperScissorsMenu(),
 
         "Warming-up": WarmingUpGame()
     }
+
     def __init__(self):
         self.current_game = None
         self.cap = cv2.VideoCapture(0)
@@ -60,21 +61,21 @@ class GameManager:
         self.cap.set(4, camera_height)
 
         cv2.namedWindow("CVDojo", cv2.WINDOW_NORMAL)
-        cv2.setWindowProperty("CVDojo", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+        # cv2.setWindowProperty("CVDojo", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
     def switch_game(self, new_game):
         options = None
         if self.current_game is not None:
             self.current_game.cleanup()
             options = self.current_game.options_next_game
-            if(options["CAMERA_WIDTH"] != self.cap.get(3)  or options["CAMERA_HEIGHT"] != self.cap.get(4)):
+            if (options["CAMERA_WIDTH"] != self.cap.get(3) or options["CAMERA_HEIGHT"] != self.cap.get(4)):
                 # GameManager overwrites camera dimension where needed
                 self.cap.set(3, options["CAMERA_WIDTH"])
                 self.cap.set(4, options["CAMERA_HEIGHT"])
-    
+
         self.current_game = self.games[new_game]
-        self.current_game.setup(options) 
-       
+        self.current_game.setup(options)
+
     def run(self):
         while True:
             ret, frame = self.cap.read()
@@ -82,20 +83,20 @@ class GameManager:
                 print("Frame not captured, exiting...")
                 break
             frame = self.current_game.update(frame)
-           
+
             if self.current_game.should_switch and self._enough_time_passed():
-                if(self.count == 0): # We require an overlay with the progress bar to be set as the last shown frame
+                if (self.count == 0):  # We require an overlay with the progress bar to be set as the last shown frame
                     overlay = np.ones(frame.shape, dtype="uint8") * 127
-                    alpha = 0.7 
-                    frame = cv2.addWeighted(frame, 1-alpha, overlay, alpha, 0)
-                    frame = Generics.overlayPNG(frame,self.loading_image, [200,200] )
+                    alpha = 0.7
+                    frame = cv2.addWeighted(frame, 1 - alpha, overlay, alpha, 0)
+                    frame = Generics.overlayPNG(frame, self.loading_image, [200, 200])
                     self.count = 1
                 else:
-                    self.count = 0 
+                    self.count = 0
                     next_game = self.current_game.next_game
-                    if(next_game is None):
+                    if (next_game is None):
                         print("No new game given. Got: ", next_game)
-                        break # exit entirely
+                        break  # exit entirely
                     self.switch_game(next_game)
                     self.enough_time_passed = False
             cv2.imshow("CVDojo", frame)
@@ -103,7 +104,8 @@ class GameManager:
         self.cap.release()
         cv2.destroyAllWindows()
 
-    def _enough_time_passed(self): # A small delay before the next screen is set to make sure player sees the menu physics
+    def _enough_time_passed(
+            self):  # A small delay before the next screen is set to make sure player sees the menu physics
         if self.enough_time_passed:
             return True
         if self.start_time is None:
@@ -111,9 +113,9 @@ class GameManager:
             self.start_time = time.time()
             return False
 
-        self.elapsed_time = time.time() - self.start_time  
+        self.elapsed_time = time.time() - self.start_time
         print("Elapsed time: ", self.elapsed_time)
-        if(self.elapsed_time >= self.delay_duration):
+        if (self.elapsed_time >= self.delay_duration):
             print("ENOUGH TIME HAS ELAPSED")
             self.enough_time_passed = True
             self.start_time = None
@@ -122,5 +124,5 @@ class GameManager:
 
 
 game_manager = GameManager()
-game_manager.switch_game("Main Menu")
+game_manager.switch_game("Fight Simulator")
 game_manager.run()
