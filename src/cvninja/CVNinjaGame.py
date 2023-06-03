@@ -35,18 +35,22 @@ class CVNinjaGame(CVGame):
           self.background = cv2.imread(CVAssets.IMAGE_DOJO, cv2.IMREAD_UNCHANGED)
           self.background = cv2.cvtColor(self.background, cv2.COLOR_BGRA2RGBA)
           # left and right
-          self.spawn_postitions=  [(-70, 50),(-70, 40),(-70, 30),
-                                   (710, 50), (710, 40), (710, 30)
-                                   ]
+          self.spawn_postitions=  [(-70, 50),(-70, 40),(-70, 30),# left corner
+                                   (710, 50), (710, 40), (710, 30), # right corner
+                                   (100,-50), (300,-50), (500,-50)]
 
 
      def setup(self, options):
-          self.all_scores = pd.read_csv(CVAssets.CSV_SCORES)
+          data = pd.read_csv(CVAssets.CSV_SCORES)
+          sorted_data = data.sort_values(by='score', ascending=False)
+          self.top_scores = sorted_data.head(5)
+          self.bomb_tutorial_done = False
           self.stop_threads = False
           for player_object_spawners in self.cvninja_objects:
                for object_spawner in player_object_spawners:
                     for shape in object_spawner.pymunk_objects_to_draw:
                          object_spawner.pymunk_objects_to_draw.remove(shape)
+
           self.space = pymunk.Space()
           self.space.gravity = (0, 980)
           self.players = []
@@ -106,52 +110,23 @@ class CVNinjaGame(CVGame):
 
      def update(self, frame):
           display_fps = self.cvFpsCalc.get()
-          height, width, _ = frame.shape
           image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
           image = cv2.flip(image, 1)
-
           image.flags.writeable = False  
+
           results = self.yolo_model(image, max_det=self.options["NUMBER_OF_PLAYERS"], verbose=False)
           image.flags.writeable = True  
-
           self.space.step(1/60)
           image = Generics.overlayPNG(image, self.background, pos=[0, 0])
-
-          try:
-               for i, result in enumerate(results):
-                    keypoints = result.keypoints.cpu().numpy()[0]
-                    player_index = int(keypoints[2][0]) > (self.options["CAMERA_WIDTH"] / self.options["NUMBER_OF_PLAYERS"]) 
-                    self.players[player_index].update_tracking(keypoints)
-                    Generics.get_player_trailing(self.players[player_index], image)
-                    Generics.draw_stick_figure(image, keypoints)
-                    self.players[player_index].reset_keypoints()
-                    
-                    # if player strikes == 3 or 4 idc, you remove them from the players array and add them to defeated players array.
-                    # if deafeated players == number_of_players: the game must conclude to the final screen (called and returned here)
-                    # image = cv2.cvtColor(image, cv2.COLOR_RGBA2BGR) <-- might have to include this before return. 
-          except Exception:
-               traceback.print_exc()
-               pass
+          self._draw_players(image, results)
 
           image = cv2.cvtColor(image, cv2.COLOR_RGBA2BGR)
+          cv2.putText(image, "FPS:" + str(display_fps), (320, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA) 
 
-          # FPS, uncomment either to display
-          # image = Generics.put_text_with_custom_font(image, "FPS:" + str(display_fps), (320, 30), CVAssets.FONT_FRUIT_NINJA,
-          #                                              30, font_color = (0, 255, 0))
-          cv2.putText(image, "FPS:" + str(display_fps), (320, 30),
-                         cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA) 
-
-          
-               
-          
           for i, player in enumerate(self.players):
-               #self._handle_spawns(player, self.cvninja_objects["Player-" + str(player_index+1)])
                image = self._draw_stats(image,player, 10 + (i * (self.options["CAMERA_WIDTH"] / 2)))
-
                if(player.strikes >= 3):
-                    #image = cv2.cvtColor(image, cv2.COLOR_RGBA2BGR)
-                    image = Generics.put_text_with_custom_font(image, "GAME OVER", (230, 50), CVAssets.FONT_FRUIT_NINJA,
-                                                                 40, font_color = (0, 255, 0))
+                    image = self._draw_final_screen(image)
                     if cv2.waitKey(1) & 0xFF == ord('q'):
                          self.should_switch = True
                          self.next_game = "Main Menu"
@@ -161,14 +136,24 @@ class CVNinjaGame(CVGame):
                for object_spawner in self.cvninja_objects["Player-" + str(player_index+1)]:
                     for shape in object_spawner.pymunk_objects_to_draw:
                          image = Generics.draw_pymunk_object_in_opencv(image, shape)
-          # For debugging bugged objects 
-          # print("Current objects on screen: ", len(self.cvninja_objects["Player-1"][0].pymunk_objects_to_draw) )
-          # for broken_object in self.cvninja_objects["Player-1"][0].pymunk_objects_to_draw:
-          #      print(broken_object.body.position)
+
           if cv2.waitKey(1) & 0xFF == ord('q'):
                self.should_switch = True
                self.next_game = "Main Menu"
           return image
+
+     def _draw_players(self, image, results):
+          try:
+               for i, result in enumerate(results):
+                    keypoints = result.keypoints.cpu().numpy()[0]
+                    player_index = int(keypoints[2][0]) > (self.options["CAMERA_WIDTH"] / self.options["NUMBER_OF_PLAYERS"]) 
+                    self.players[player_index].update_tracking(keypoints)
+                    Generics.get_player_trailing(self.players[player_index], image)
+                    Generics.draw_stick_figure(image, keypoints)
+                    self.players[player_index].reset_keypoints()
+          except Exception:
+               traceback.print_exc()
+               pass
         
      def _draw_stats(self, image, player, x):
           strikes = player.strikes
@@ -193,40 +178,68 @@ class CVNinjaGame(CVGame):
           
           return image
      
-     def _draw_final_screen(self):
+     def _draw_final_screen(self, image):
+          text = "  Rank  Name  Score  \n"
+          for i, (_, row) in enumerate(self.top_scores.iterrows()):
+               name = row['name']
+               score = row['score']
+               text += f'     {i+1}.      {name}     {score}\n'
           
+          image = Generics.put_text_with_custom_font(image, text, (230, 50), CVAssets.FONT_FRUIT_NINJA,
+                                                       25, font_color = (0,0, 0))
+          return image
 
-     def _handle_spawns(self, player, object_spawner, spawn_postitions):
-          while self.stop_threads == False:     
-               time.sleep(5)
+     def _handle_spawns(self, player, object_spawners, spawn_postitions):
+          while self.stop_threads == False:
+               for i in range(25):
+                    if(player.strikes >= 3):
+                         self._cleanup_object_spawners(object_spawners)
+                         return  
+                    time.sleep(.2)
+
                random_spawn = spawn_postitions[random.randint(0,len(spawn_postitions)-1)]
-               if(player.strikes >= 3):
-                    return
                options = [0,1,2]
-               weights = [30, 50, 50]  
+               weights = [40, 60, 60] 
                
-               if(player.score <= 200):
+               if(player.score <= 250):
                     weights = [0, 50, 50] 
                     random_object = random.choices(options, weights)[0]
-                    object_spawner[random_object].spawn_object(self.space, self.collision_types["objects_player_" + str(player.collision_type)], position = random_spawn)
-               if(player.score > 200):
-                    max_objects = 4
-                    scaling_factor = min(player.score // 100, max_objects)
-                    
+                    object_spawners[random_object].spawn_object(self.space, self.collision_types["objects_player_" + str(player.collision_type)], position = random_spawn)
+                    continue  
+               if(player.score > 250 and self.bomb_tutorial_done):
+                    weights = [40, 60, 60] 
+                    max_objects = 5
+                    scaling_factor = min(player.score // 150, max_objects)
                     for _ in range(scaling_factor):
                          options = [0, 1, 2]
-                         weights = [40, 60, 60]
                          random_object = random.choices(options, weights)[0]
-                         object_spawner[random_object].spawn_object(
+                         object_spawners[random_object].spawn_object(
                               self.space,
                               self.collision_types["objects_player_" + str(player.collision_type)],
                               position=random_spawn
                          )
                          random_spawn = spawn_postitions[random.randint(0,len(spawn_postitions)-1)]
                          time.sleep(.8)
-          return
+               else:
+                    weights = [100, 0, 0]
+                    random_object = random.choices(options, weights)[0]
+                    random_spawn = spawn_postitions[random.randint(0,len(spawn_postitions)-1)]
+                    object_spawners[random_object].spawn_object(
+                         self.space, 
+                         self.collision_types["objects_player_" + str(player.collision_type)], 
+                         position = random_spawn
+                    )
+                    self.bomb_tutorial_done = True
           
-
+     def _cleanup_object_spawners(self, object_spawners):
+          # Cleanup an object spawner for a given player's list  of object_spawners
+          for object_spawner in object_spawners:
+               for shape in object_spawner.pymunk_objects_to_draw:
+                    object_spawner.pymunk_objects_to_draw.remove(shape)
+                    try:
+                         self.space.remove(shape)
+                    except:
+                         pass
      def handle_collision(self, arbiter, space, data):
           # Get objects that were involved in collision
           #print("__________________ COLISION __________________")

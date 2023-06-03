@@ -22,9 +22,9 @@ class CVNinjaPlank(CVNinjaObject):
         target = super().spawn_object(space, collision_type, position, play_sound = True)
         if(position[0] < 0):
             target.body.apply_impulse_at_local_point((250, -150))
-        else:
+        elif(position[0] > 640):
             target.body.apply_impulse_at_local_point((-250, -150))
-
+        
 
         # calls super, but adds some force depending on the positions
 

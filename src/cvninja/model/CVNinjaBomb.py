@@ -22,7 +22,7 @@ class CVNinjaBomb(CVNinjaObject):
         ## todo: bomb sound
         if(position[0] < 0):
             target.body.apply_impulse_at_local_point((250, -150))
-        else:
+        elif(position[0] > 640):
             target.body.apply_impulse_at_local_point((-250, -150))
 
         # calls super, but adds some force depending on the positions
