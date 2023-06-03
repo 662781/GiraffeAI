@@ -5,6 +5,7 @@ from shared.model import YOLO
 from shared.utils import Generics, CvFpsCalc, CVAssets
 from shared.model import CVNinjaPlayer, CVGame
 from cvninja.model import CVNinjaPlank, CVNinjaRock, CVNinjaBomb
+from menus.model import MainMenuObject
 import pymunk
 import threading
 import time
@@ -21,6 +22,8 @@ class CVNinjaGame(CVGame):
                "broken_objects" : 3,
                "objects_player_1" : 4,
                "objects_player_2": 5,
+               "menu_option_main_menu": 6,
+               "menu_option_play_again": 7,
                "void": 99, 
           }
           self.yolo_model = YOLO()  # load an official model
@@ -28,9 +31,10 @@ class CVNinjaGame(CVGame):
           self.plank = cv2.imread(CVAssets.IMAGE_PLANK, cv2.IMREAD_UNCHANGED)
           self.rock = cv2.imread(CVAssets.IMAGE_ROCK, cv2.IMREAD_UNCHANGED)
           self.bomb = cv2.imread(CVAssets.IMAGE_BOMB, cv2.IMREAD_UNCHANGED)
+          self.image_play_again = cv2.imread(CVAssets.IMAGE_MENU_CVNINJA_PLAY_AGAIN, cv2.IMREAD_UNCHANGED)
+          self.image_main_menu = cv2.imread(CVAssets.IMAGE_MENU_CVNINJA_MAIN_MENU, cv2.IMREAD_UNCHANGED)
 
-          # todo: when 2 you have two 
-          self.cvninja_objects ={}
+          
 
           self.background = cv2.imread(CVAssets.IMAGE_DOJO, cv2.IMREAD_UNCHANGED)
           self.background = cv2.cvtColor(self.background, cv2.COLOR_BGRA2RGBA)
@@ -41,6 +45,10 @@ class CVNinjaGame(CVGame):
 
 
      def setup(self, options):
+          # todo: when 2 you have two 
+          self.cvninja_objects ={}
+          self.menu_options = []
+          self.menu_options.extend([MainMenuObject(self.image_main_menu, 150), MainMenuObject(self.image_play_again, 150)])
           data = pd.read_csv(CVAssets.CSV_SCORES)
           sorted_data = data.sort_values(by='score', ascending=False)
           self.top_scores = sorted_data.head(5)
@@ -55,7 +63,8 @@ class CVNinjaGame(CVGame):
           self.space.gravity = (0, 980)
           self.players = []
           self.threads = [] # for spawning objecsts
-          self.options["NUMBER_OF_PLAYERS"] = 1
+          self.state_end_game = False
+          self.options["NUMBER_OF_PLAYERS"] = 1 # todo, dynamic
 
           self.object_options = [0, 1, 2]
 
@@ -86,6 +95,15 @@ class CVNinjaGame(CVGame):
           handler3 = self.space.add_collision_handler(self.collision_types["objects_player_1"],self.collision_types["void"])
           handler3.data["player"] = self.players[0]
           handler3.separate = self.out_of_bounds
+
+          # Aftergame menus
+          handler = self.space.add_collision_handler(self.collision_types["limbs_player_1"], self.collision_types["menu_option_main_menu"])
+          handler.data["player"] = self.players[0] # Collision needs the player to determine extra conditions (long enough slice, used 2 hands, etc.)
+          handler.begin = self._handle_menu
+
+          handler = self.space.add_collision_handler(self.collision_types["limbs_player_1"], self.collision_types["menu_option_play_again"])
+          handler.data["player"] = self.players[0] # Collision needs the player to determine extra conditions (long enough slice, used 2 hands, etc.)
+          handler.begin = self._handle_menu
 
           # Real boundaries of the space are a bit bigger than 480p, for illusion of objects appearing in and vanishing from the screen. 
           left_segment = pymunk.Segment(self.space.static_body, (-200, 0), (-200, 800), 100)
@@ -127,11 +145,14 @@ class CVNinjaGame(CVGame):
                image = self._draw_stats(image,player, 10 + (i * (self.options["CAMERA_WIDTH"] / 2)))
                if(player.strikes >= 3):
                     image = self._draw_final_screen(image)
+                    for menu_item in self.menu_options:
+                         for shape in menu_item.pymunk_objects_to_draw:
+                              image = Generics.draw_pymunk_object_in_opencv(image, shape)
                     if cv2.waitKey(1) & 0xFF == ord('q'):
                          self.should_switch = True
                          self.next_game = "Main Menu"
                     return image
-
+              
           for player_index in range(len(self.cvninja_objects)):
                for object_spawner in self.cvninja_objects["Player-" + str(player_index+1)]:
                     for shape in object_spawner.pymunk_objects_to_draw:
@@ -179,6 +200,14 @@ class CVNinjaGame(CVGame):
           return image
      
      def _draw_final_screen(self, image):
+          if(not self.state_end_game):
+               self.space.gravity = (0,0)
+               self.menu_options[0].spawn_object(self.space, self.collision_types["menu_option_main_menu"], position = (100, 80))
+               self.menu_options[1].spawn_object(self.space, self.collision_types["menu_option_play_again"], position = (400,80))
+               self.state_end_game = True
+          return image              
+
+          """Draw the menu options"""
           text = "  Rank  Name  Score  \n"
           for i, (_, row) in enumerate(self.top_scores.iterrows()):
                name = row['name']
@@ -236,10 +265,6 @@ class CVNinjaGame(CVGame):
           for object_spawner in object_spawners:
                for shape in object_spawner.pymunk_objects_to_draw:
                     object_spawner.pymunk_objects_to_draw.remove(shape)
-                    try:
-                         self.space.remove(shape)
-                    except:
-                         pass
      def handle_collision(self, arbiter, space, data):
           # Get objects that were involved in collision
           #print("__________________ COLISION __________________")
@@ -266,6 +291,18 @@ class CVNinjaGame(CVGame):
           #else:
                #print("Trail: ",shape_trail_length )
           return True
+     def _handle_menu(self, arbiter, space, data):
+          shape = next((obj for obj in arbiter.shapes if obj.body.body_type != pymunk.Body.KINEMATIC), None)
+          kinematic_shape = arbiter.shapes[0]
+          shape_trail_length = data["player"].get_trailing_length_by_limb(kinematic_shape.player_limb)
+          if(shape_trail_length > 10): 
+               shape.parent_object.collision_aftermath(space, shape)
+               self.should_switch = True
+               if(shape.collision_type == self.collision_types["menu_option_play_again"]):
+                    self.options_next_game["NUMBER_OF_PLAYERS"] = self.options["NUMBER_OF_PLAYERS"]
+                    self.next_game = "CVNinja"
+               elif(shape.collision_type == self.collision_types["menu_option_main_menu"]):
+                    self.next_game = "Main Menu"
 
      def out_of_bounds(self, arbiter, space, data):
          #print("__________________ OUT OF BOUNDS __________________")

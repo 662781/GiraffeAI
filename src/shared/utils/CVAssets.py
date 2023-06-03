@@ -38,12 +38,14 @@ class CVAssets():
     AUDIO_BOMB_HISSING = "cvninja/assets/bomb-hissing.mp3"
     AUDIO_STRIKE = "cvninja/assets/strike.mp3"
     CSV_SCORES = "cvninja/assets/scores.csv"
+    IMAGE_MENU_CVNINJA_PLAY_AGAIN = "cvninja/assets/Return-Play-Again.png"
+    IMAGE_MENU_CVNINJA_MAIN_MENU = "cvninja/assets/Return-Main-Menu.png"
 
     # RockPaperScissors assets
     CSV_ROCK_PAPER_SCISSORS = "RockPaperScissors/assets/Rock-Paper-Scissor-Dataset.csv"
 
 
     # Shared assets
-    YOLO_MODEL_L = "shared/assets/yolov8s-pose.pt"
+    YOLO_MODEL_L = "shared/assets/yolov8l-pose.pt"
     IMAGE_DOJO = "shared/assets/dojo.png"
     IMAGE_LOADING = "shared/assets/loading.png"

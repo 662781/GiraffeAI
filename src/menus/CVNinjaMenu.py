@@ -41,6 +41,7 @@ class CVNinjaMenu(CVGame):
         self.space.add(self.player.line_right_hand_body, self.player.line_right_hand_shape)
         self.space.add(self.player.line_left_leg_body, self.player.line_left_leg_shape)
         self.space.add(self.player.line_right_leg_body, self.player.line_right_leg_shape)
+        
         handler = self.space.add_collision_handler(5, 1)
         handler.data["player"] = self.player # Collision needs the player to determine extra conditions (long enough slice, used 2 hands, etc.)
         handler.begin = self.process_hit
