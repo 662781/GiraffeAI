@@ -22,15 +22,18 @@ class CVNinjaMenu(CVGame):
         self.yolo_model = YOLO(CVAssets.YOLO_MODEL_L)  # load an official model
         self.background = cv2.imread(CVAssets.IMAGE_DOJO, cv2.IMREAD_UNCHANGED)
         self.background = cv2.cvtColor(self.background, cv2.COLOR_BGRA2RGBA)
+        self.back_button = cv2.imread(CVAssets.IMAGE_MENU_BACK_BUTTON, cv2.IMREAD_UNCHANGED)
 
     def setup(self, options):
         self.space = pymunk.Space()
         self.space.gravity = (0, 0)
-        # todo: game menu options need new images but the design has terrible images except for the CVNinja one. Have Bas edit them on figma and download them 
+        self.option_back_button = MainMenuObject(self.back_button, 100)
+        self.option_back_button.spawn_object(self.space, 99, position=(30,350))
+
         self.ninja_item = MainMenuObject(self.cvninja_image, 150)
         self.ninja_item.spawn_object(self.space, 1, position=(420,250))
 
-        self.game_options.append(self.ninja_item)
+        self.game_options.extend([self.ninja_item, self.option_back_button])
         
         self.background = cv2.resize(self.background, (self.options["CAMERA_WIDTH"], self.options["CAMERA_WIDTH"]))
         self.player = CVNinjaPlayer(5)
@@ -38,7 +41,11 @@ class CVNinjaMenu(CVGame):
         self.space.add(self.player.line_right_hand_body, self.player.line_right_hand_shape)
         self.space.add(self.player.line_left_leg_body, self.player.line_left_leg_shape)
         self.space.add(self.player.line_right_leg_body, self.player.line_right_leg_shape)
+        
         handler = self.space.add_collision_handler(5, 1)
+        handler.data["player"] = self.player # Collision needs the player to determine extra conditions (long enough slice, used 2 hands, etc.)
+        handler.begin = self.process_hit
+        handler = self.space.add_collision_handler(5, 99)
         handler.data["player"] = self.player # Collision needs the player to determine extra conditions (long enough slice, used 2 hands, etc.)
         handler.begin = self.process_hit
 
@@ -89,13 +96,15 @@ class CVNinjaMenu(CVGame):
         kinematic_shape = arbiter.shapes[0]
         shape_trail_length = data["player"].get_trailing_length_by_limb(kinematic_shape.player_limb)
         print("Hit with ", kinematic_shape.player_limb)
-        for shape in arbiter.shapes:
-            if(shape.body.body_type != pymunk.Body.KINEMATIC):
-                shape.parent_object.collision_aftermath(space, shape)
-                if(shape_trail_length > 10): 
-                    self.options_next_game["NUMBER_OF_PLAYERS"] = 1
-                    self.should_switch = True
-                    self.next_game = "CVNinja"
+        shape = next((obj for obj in arbiter.shapes if obj.body.body_type != pymunk.Body.KINEMATIC), None)
+        if(shape_trail_length > 10): 
+            shape.parent_object.collision_aftermath(space, shape)
+            self.should_switch = True
+            if(shape.collision_type == 1):
+                self.options_next_game["NUMBER_OF_PLAYERS"] = 1 # todo: dynamic
+                self.next_game = "CVNinja"
+            elif(shape.collision_type == 99):
+                self.next_game = "Main Menu"
         return True
     
 

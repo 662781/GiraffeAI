@@ -13,6 +13,7 @@ class CVAssets():
     IMAGE_MENU_CVNINJA = "menus/assets/Menu-Item-CVNinja.png"
     IMAGE_MENU_CVNINJA_START = "menus/assets/CVNinja-Start.png"
     
+    
     ## Warming up
     IMAGE_MENU_WARMING_UP = "menus/assets/Menu-Item-Warming-up.png"
     
@@ -30,6 +31,18 @@ class CVAssets():
     IMAGE_PLANK = "cvninja/assets/plank.png"
     IMAGE_ROCK = "cvninja/assets/rock.png"
     IMAGE_WOOD = "cvninja/assets/wood.png"
+    IMAGE_MISHA = "cvninja/assets/micha.png"
+    AUDIO_ROCK_SMASH = "cvninja/assets/smash.mp3"
+    AUDIO_PLANK_CUT = "cvninja/assets/slash.mp3"
+    AUDIO_OBJECT_SPAWN = "cvninja/assets/spawn.mp3"
+    AUDIO_EXPLOSION = "cvninja/assets/explosion.mp3"
+    AUDIO_BOMB_HISSING = "cvninja/assets/bomb-hissing.mp3"
+    AUDIO_STRIKE = "cvninja/assets/strike.mp3"
+    AUDIO_MICHA_INTRO = "cvninja/assets/Micha.mp3"
+    AUDIO_MICHA_OUTRO = "cvninja/assets/Micha-broken.mp3"
+
+    IMAGE_MENU_CVNINJA_PLAY_AGAIN = "cvninja/assets/Return-Play-Again.png"
+    IMAGE_MENU_CVNINJA_MAIN_MENU = "cvninja/assets/Return-Main-Menu.png"
 
     # RockPaperScissors assets
     CSV_ROCK_PAPER_SCISSORS = "RockPaperScissors/assets/Rock-Paper-Scissor-Dataset.csv"
