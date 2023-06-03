@@ -1,5 +1,4 @@
 import time
-import tkinter as tk
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -38,17 +37,15 @@ class FightSimulatorGame(CVGame):
         self.options = options
 
     def update(self, frame):
+        global angle, left_elbow_xy
         self.create_players()
 
         image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         landmarks = self.pose_model.process(image)
 
         if not self.is_game_started:
-            self.stop_game()
-            if cv2.waitKey(1) & 0xFF == ord('s'):
-                self.start_time = time.time()
-                self.is_game_started = True
-
+            self.check_for_game_stop()
+            self.check_for_game_start()
             return self.draw_play_button(image)
 
         self.check_and_select_punch()
@@ -70,10 +67,15 @@ class FightSimulatorGame(CVGame):
 
             self.elapsed_time = time.time() - self.start_time
 
-            self.stop_game()
+            self.check_for_game_stop()
 
         return self.draw_on_frame(image=image, angle=angle, left_elbow_xy=left_elbow_xy, results=landmarks,
                                   player=self.players[0])
+
+    def check_for_game_start(self):
+        if cv2.waitKey(1) & 0xFF == ord('s'):
+            self.start_time = time.time()
+            self.is_game_started = True
 
     def cleanup(self):
         super().cleanup()
@@ -94,16 +96,17 @@ class FightSimulatorGame(CVGame):
             self.points = 0
             self.spawn_time = time.time()
 
-    def stop_game(self):
+    def check_for_game_stop(self):
         if cv2.waitKey(1) & 0xFF == ord('q') or self.elapsed_time > 95:
             self.should_switch = True
             self.next_game = None
+
     @staticmethod
     def draw_play_button(image):
-        image = Generics.put_text_with_custom_font(image=image, text="Hold 'S' to start the game",
-                                                   position=(120, 80),
+        image = Generics.put_text_with_custom_font(image=image, text="Hold 'S' to start the game,",
+                                                   position=(110, 80),
                                                    font_path=CVAssets.FONT_FRUIT_NINJA, font_size=35,
-                                                   font_color=(248, 210, 62), outline_color=(0, 0, 0), outline_width=2)
+                                                   font_color=(255, 0, 0), outline_color=(0, 0, 0), outline_width=2)
 
         image = Generics.put_text_with_custom_font(image=image, text="Be Ready!",
                                                    position=(120, 110),
@@ -122,20 +125,17 @@ class FightSimulatorGame(CVGame):
             self.previous_combined_points = self.combined_points
 
     def select_random_punch(self):
-        punch_types = ["jab", "uppercut", "hook"]
-        probabilities = [4, 1, 1]  # Probabilities of each punch type
+        probabilities = [4, 1, 1]
 
-        # Create a weighted list of punches based on probabilities
         weighted_punches = []
-        for i, punch in enumerate(punch_types):
+        for i, punch in enumerate(self.punch_types):
             weighted_punches.extend([punch] * probabilities[i])
 
-        # Select a random punch from the weighted list
         random_punch = random.choice(weighted_punches)
-        print("Selected punch:", random_punch)
         self.selected_punch = random_punch
 
-    def get_moving_average(self, points, number_of_last_points):
+    @staticmethod
+    def get_moving_average(points, number_of_last_points):
         if len(points) < number_of_last_points:
             return points[-1][0]  # Return the last point if not enough points are available
 
@@ -173,7 +173,8 @@ class FightSimulatorGame(CVGame):
             player.left_hand_track_current += distance_left_hand
             player.left_hand_track_previous_point = cx_left, cy_left
 
-    def calculate_angle(self, first_point, mid_point, end_point):
+    @staticmethod
+    def calculate_angle(first_point, mid_point, end_point):
         first_point = np.array(first_point)
         mid_point = np.array(mid_point)
         end_point = np.array(end_point)
@@ -272,7 +273,8 @@ class FightSimulatorGame(CVGame):
         for i in range(self.number_of_players):
             self.players.append(self.Player())
 
-    def draw_snake_line(self, image, player, color):
+    @staticmethod
+    def draw_snake_line(image, player, color):
         line_time = 3
         current_time = time.time()
         player.left_hand_track_points = [(point, timestamp) for point, timestamp in player.left_hand_track_points if
