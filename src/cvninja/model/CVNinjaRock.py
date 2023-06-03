@@ -44,7 +44,7 @@ class CVNinjaRock(CVNinjaObject):
         except:
             raise RuntimeError("Object was already removed, possibly due to double collision.")
 
-        playsound("cvninja/assets/smash.mp3", block=False)
+        playsound(CVAssets.AUDIO_ROCK_SMASH, block=False)
 
         space.remove(shape, shape.body)
         broken_pymunk_objects = []

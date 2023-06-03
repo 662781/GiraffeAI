@@ -4,7 +4,7 @@ import cv2
 from shared.model import YOLO
 from shared.utils import Generics, CvFpsCalc, CVAssets
 from shared.model import CVNinjaPlayer, CVGame
-from cvninja.model import CVNinjaPlank, CVNinjaRock, CVNinjaBomb
+from cvninja.model import CVNinjaPlank, CVNinjaRock, CVNinjaBomb, CVNinjaMicha
 from menus.model import MainMenuObject
 import pymunk
 import threading
@@ -31,6 +31,7 @@ class CVNinjaGame(CVGame):
           self.plank = cv2.imread(CVAssets.IMAGE_PLANK, cv2.IMREAD_UNCHANGED)
           self.rock = cv2.imread(CVAssets.IMAGE_ROCK, cv2.IMREAD_UNCHANGED)
           self.bomb = cv2.imread(CVAssets.IMAGE_BOMB, cv2.IMREAD_UNCHANGED)
+          self.micha = cv2.imread(CVAssets.IMAGE_MISHA, cv2.IMREAD_UNCHANGED)
           self.image_play_again = cv2.imread(CVAssets.IMAGE_MENU_CVNINJA_PLAY_AGAIN, cv2.IMREAD_UNCHANGED)
           self.image_main_menu = cv2.imread(CVAssets.IMAGE_MENU_CVNINJA_MAIN_MENU, cv2.IMREAD_UNCHANGED)
 
@@ -49,9 +50,6 @@ class CVNinjaGame(CVGame):
           self.cvninja_objects ={}
           self.menu_options = []
           self.menu_options.extend([MainMenuObject(self.image_main_menu, 150), MainMenuObject(self.image_play_again, 150)])
-          data = pd.read_csv(CVAssets.CSV_SCORES)
-          sorted_data = data.sort_values(by='score', ascending=False)
-          self.top_scores = sorted_data.head(5)
           self.bomb_tutorial_done = False
           self.stop_threads = False
           for player_object_spawners in self.cvninja_objects:
@@ -66,7 +64,8 @@ class CVNinjaGame(CVGame):
           self.state_end_game = False
           self.options["NUMBER_OF_PLAYERS"] = 1 # todo, dynamic
 
-          self.object_options = [0, 1, 2]
+          
+
 
           for i in range(self.options["NUMBER_OF_PLAYERS"]):
                
@@ -74,7 +73,8 @@ class CVNinjaGame(CVGame):
                player = CVNinjaPlayer(self.collision_types["limbs_player_" + player_index])
                self.cvninja_objects["Player-" + str(i+1)] =  [CVNinjaBomb(self.bomb, 100),
                                                          CVNinjaRock(self.rock, 80),
-                                                         CVNinjaPlank(self.plank, 70)]
+                                                         CVNinjaPlank(self.plank, 70),
+                                                         CVNinjaMicha(self.micha, 160)]
                spawn_handler = threading.Thread(target=lambda: self._handle_spawns(player, self.cvninja_objects["Player-" + player_index], self.spawn_postitions))
                                                        
                self.space.add(player.line_left_hand_body, player.line_left_hand_shape)
@@ -84,6 +84,9 @@ class CVNinjaGame(CVGame):
                self.players.append(player)
                self.threads.append(spawn_handler)
 
+          # Determine all the options 
+          self.object_options = [index for index, _ in enumerate(self.cvninja_objects["Player-1"])]
+          
           self.background = cv2.resize(self.background, (self.options["CAMERA_WIDTH"], self.options["CAMERA_WIDTH"]))
           handler = self.space.add_collision_handler(self.collision_types["limbs_player_1"], self.collision_types["objects_player_1"])
           handler.data["player"] = self.players[0] # Collision needs the player to determine extra conditions (long enough slice, used 2 hands, etc.)
@@ -227,20 +230,18 @@ class CVNinjaGame(CVGame):
                     time.sleep(.2)
 
                random_spawn = spawn_postitions[random.randint(0,len(spawn_postitions)-1)]
-               options = [0,1,2]
-               weights = [40, 60, 60] 
+               options = [0,1,2,3]
+               weights = [40, 60, 60, 5] 
                
                if(player.score <= 250):
-                    weights = [0, 50, 50] 
-                    random_object = random.choices(options, weights)[0]
+                    one_time_weights = [0, 50, 50, 5] 
+                    random_object = random.choices(options, one_time_weights)[0]
                     object_spawners[random_object].spawn_object(self.space, self.collision_types["objects_player_" + str(player.collision_type)], position = random_spawn)
                     continue  
                if(player.score > 250 and self.bomb_tutorial_done):
-                    weights = [40, 60, 60] 
                     max_objects = 5
                     scaling_factor = min(player.score // 150, max_objects)
                     for _ in range(scaling_factor):
-                         options = [0, 1, 2]
                          random_object = random.choices(options, weights)[0]
                          object_spawners[random_object].spawn_object(
                               self.space,
@@ -250,8 +251,8 @@ class CVNinjaGame(CVGame):
                          random_spawn = spawn_postitions[random.randint(0,len(spawn_postitions)-1)]
                          time.sleep(.8)
                else:
-                    weights = [100, 0, 0]
-                    random_object = random.choices(options, weights)[0]
+                    bomb_only_weights = [100, 0, 0, 0]
+                    random_object = random.choices(options, bomb_only_weights)[0]
                     random_spawn = spawn_postitions[random.randint(0,len(spawn_postitions)-1)]
                     object_spawners[random_object].spawn_object(
                          self.space, 
