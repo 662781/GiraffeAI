@@ -32,6 +32,7 @@ class FightSimulatorGame(CVGame):
         self.combined_points = 0
         self.previous_combined_points = -1
         self.is_game_started = False
+        self.game_duration = 90
 
     def setup(self, options):
         self.options = options
@@ -109,7 +110,7 @@ class FightSimulatorGame(CVGame):
                                                    font_color=(255, 0, 0), outline_color=(0, 0, 0), outline_width=2)
 
         image = Generics.put_text_with_custom_font(image=image, text="Be Ready!",
-                                                   position=(120, 110),
+                                                   position=(110, 110),
                                                    font_path=CVAssets.FONT_FRUIT_NINJA, font_size=35,
                                                    font_color=(248, 210, 62), outline_color=(0, 0, 0), outline_width=2)
 
@@ -255,7 +256,8 @@ class FightSimulatorGame(CVGame):
                                                    font_size=30, font_color=(205, 127, 50), outline_color=(0, 0, 0),
                                                    outline_width=2)
 
-        image = Generics.put_text_with_custom_font(image=image, text=f"time left: {94 - self.elapsed_time:.0f}",
+        image = Generics.put_text_with_custom_font(image=image,
+                                                   text=f"time left: {self.game_duration + 1 - self.elapsed_time:.0f}",
                                                    position=(420, 10), font_path=CVAssets.FONT_FRUIT_NINJA,
                                                    font_size=30, font_color=(205, 127, 50), outline_color=(0, 0, 0),
                                                    outline_width=2)
