@@ -2,7 +2,6 @@ import numpy as np
 import tensorflow as tf
 import csv
 import os
-from ultralytics.yolo.utils.plotting import Annotator
 
 
 class KeyPointClassifier(object):
@@ -27,8 +26,9 @@ class KeyPointClassifier(object):
 
         return result_index
 
-    def show_prediction(self, ann: Annotator, index: int, xy: tuple):
-        """Show the prediction of the keypoint classifier in the CV window using an Annotator object from the Ultralytics library"""
+    @staticmethod
+    def get_classes():
+        """Get the classes from the classifier_classes csv file"""
         # Read classes in CSV file
         path = 'WarmingUp/assets/classifier_classes.csv'
 
@@ -40,13 +40,7 @@ class KeyPointClassifier(object):
                 for row in reader:
                     classes.append(row[0])
             classes = [c.strip('ï»¿') for c in classes]
-            # Select index of predicted class
-            pred_class = ""
-            for i, c in enumerate(classes):
-                if i == index:
-                    pred_class = c
-            # Draw the predicted class on the CV window
-            ann.text(xy, pred_class, txt_color=(0, 0, 0))
+        return classes
 
     def is_model_available(model_path: str):
         """Returns a boolean; checks if the model path exists"""

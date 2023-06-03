@@ -33,11 +33,14 @@ class WarmingUpGame(CVGame):
         #model.to('cuda')
 
         # The number of players chosen (should be chosen in the future game menu)
-        self.no_players_set: int = 1
+        self.no_players_set: int = 2
 
         # Create Player class instances with PlayerService
         self.pl_serv = PlayerService(self.no_players_set)
         self.players_list: list[Player] = self.pl_serv.create_players()
+
+        # Instantiate prediction list
+        self.pred_classes: list[int]
 
         # Check which exercise is chosen (Push-Up, Sit-Up, Jumping Jack, Squat)
         self.exercise: str = "PushUp"
@@ -106,37 +109,34 @@ class WarmingUpGame(CVGame):
                 self.pl_serv.append_preprocessed_keypoints_to_players(keypoints)
 
                 # Create instance of the Annotator class
-                ann = Annotator(annotated_frame)
+                # ann = Annotator(annotated_frame)
 
                 # Show all keypoint numbers with a custom annotation (for testing only)
                 # kp_serv.show_keypoint_nrs(ann, keypoints)
 
                 # Get the pre-processed keypoints (for every detected person)
-                proc_keypoints: list = []
+                player_proc_keypoints: list = []
                 if (no_players_detected == 1):
-                    proc_keypoints.append(self.players_list[0].keypoints)
+                    player_proc_keypoints.append(self.players_list[0].keypoints)
                 elif (no_players_detected > 1):
                     for player in self.players_list:
-                        proc_keypoints.append(player.keypoints)
+                        player_proc_keypoints.append(player.keypoints)
 
                 # Show the predicted class if the custom model is available (for every detected person)
-                classifier = KeyPointClassifier(self.model_path, 1)
-                pred_class: int
+                classifier = KeyPointClassifier(self.model_path, num_threads=1)
                 if (KeyPointClassifier.is_model_available(self.model_path)):
-                    for i, kp_list in enumerate(proc_keypoints):
-                        pred_class = classifier(kp_list)
-                        classifier.show_prediction(ann, pred_class, (500, 20))
+                    for i, kp_list in enumerate(player_proc_keypoints):
+                        self.pred_classes[i] = classifier(kp_list)
+                        # classifier.show_prediction(ann, pred_classes[i], (500, 20))
 
                 # If 'k' is pressed and then a number between 0 - 9, save current keypoints to csv
                 # Only available if 1 person is detected
                 if self.no_players_set == 1 and no_players_detected == 1:
-                    kp_serv.write_kp_data_to_csv(number, self.mode, proc_keypoints[0])
+                    kp_serv.write_kp_data_to_csv(number, self.mode, player_proc_keypoints[0])
 
                 # Start keeping score of the chosen exercise for each player. Add the score to each players total.
-                for player in self.players_list:
-                    # pprint.pprint(player.poses_hist)
-                    # print(player.score)
-                    if(player.does_exercise(self.exercise, pred_class) == True):
+                for i, player in enumerate(self.players_list):
+                    if(player.does_exercise(self.exercise, self.pred_classes[i]) == True):
                         player.score += 1
             else:
                 UIService.show_pause_menu()
@@ -148,8 +148,9 @@ class WarmingUpGame(CVGame):
         ui.draw_buttons()
 
         # Put the score of each player in the CV window
-        # This puts the score of 1 player on the screen
-        ui.put_score(self.players_list, (200, 50))
+        ui.put_score(self.players_list, [200, 50])
+
+        ui.show_prediction(self.pred_classes, (500, 20))
 
         # Place an indicator of the mode on screen if it's 1 (Snapshot Mode) and if there is only 1 player
         if self.no_players_set == 1:

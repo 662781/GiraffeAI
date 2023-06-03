@@ -1,14 +1,16 @@
 import cv2
+from WarmingUp.services.keypoint_classifier import KeyPointClassifier
 class UIService:
     frame = None
 
     def __init__(self, frame) -> None:
         self.frame = frame
     
-    def put_score(self, players: list, xy: tuple):
+    def put_score(self, players: list, xy: list):
         if (players is not None):
             for i, player in enumerate(players):
-                cv2.putText(self.frame, "Score Player{}: {}".format(i+1, player.score), xy, cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                cv2.putText(self.frame, "Score Player {}: {}".format(i+1, player.score), tuple(xy), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                # xy += [200, 0]
 
     def put_mode(self, mode: int, xy: tuple):
         if mode == 1:
@@ -16,6 +18,16 @@ class UIService:
 
     def show_pause_menu():
         print("Game Paused: Not enough players detected!")
+
+    def show_prediction(self, pred_classes: list[int], xy: tuple):
+        """Show the prediction of the keypoint classifier in the CV window using an Annotator object from the Ultralytics library"""
+        for class_nr in pred_classes:
+            pred_class = ""
+            for i, class_str in enumerate(KeyPointClassifier.get_classes()):
+                if i == class_nr:
+                    pred_class = class_str
+            # Draw the predicted class on the CV window
+            cv2.putText(self.frame, pred_class, xy, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
     
     def draw_buttons(self):
         # Button coordinates and dimensions
