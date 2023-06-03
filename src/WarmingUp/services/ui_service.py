@@ -6,11 +6,10 @@ class UIService:
     def __init__(self, frame) -> None:
         self.frame = frame
     
-    def put_score(self, players: list, xy: list):
+    def put_score(self, players: list, xy: tuple):
         if (players is not None):
             for i, player in enumerate(players):
-                cv2.putText(self.frame, "Score Player {}: {}".format(i+1, player.score), tuple(xy), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-                # xy += [200, 0]
+                cv2.putText(self.frame, "Score Player {}: {}".format(i+1, player.score), xy, cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
     def put_mode(self, mode: int, xy: tuple):
         if mode == 1:

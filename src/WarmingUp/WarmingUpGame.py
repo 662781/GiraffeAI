@@ -33,7 +33,7 @@ class WarmingUpGame(CVGame):
         #model.to('cuda')
 
         # The number of players chosen (should be chosen in the future game menu)
-        self.no_players_set: int = 2
+        self.no_players_set: int = 1
 
         # Create Player class instances with PlayerService
         self.pl_serv = PlayerService(self.no_players_set)
@@ -145,10 +145,10 @@ class WarmingUpGame(CVGame):
         ui.draw_buttons()
 
         # Put the score of each player on the CV window
-        ui.put_score(self.players_list, [200, 50])
+        ui.put_score(self.players_list, (200, 50))
 
         # Put the predicted class of each player on the CV window
-        pprint.pprint(self.pred_classes)
+        print("Predicted Classes per player: ", self.pred_classes)
         ui.show_prediction(self.pred_classes, (200, 200))
 
         # Place an indicator of the mode on screen if it's 1 (Snapshot Mode) and if there is only 1 player
