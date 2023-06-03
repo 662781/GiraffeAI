@@ -12,10 +12,8 @@ class KeyPointClassifier(object):
         self.input_details = self.interpreter.get_input_details()
         self.output_details = self.interpreter.get_output_details()
 
-    """
-    Use the TensorFlow model to get the predicted class index (based on a given pre-processed keypointlist)
-    """
     def __call__(self,keypoint_list):
+        """Use the TensorFlow model to get the predicted class index (based on a given pre-processed keypointlist)"""
         input_details_tensor_index = self.input_details[0]['index']
         keypoint_array = np.array([[keypoint_list]], dtype=np.float32)
         self.interpreter.set_tensor(input_details_tensor_index, keypoint_array)
@@ -29,10 +27,8 @@ class KeyPointClassifier(object):
 
         return result_index
 
-    """
-    Show the prediction of the keypoint classifier in the CV window using an Annotator object from the Ultralytics library
-    """
     def show_prediction(self, ann: Annotator, index: int, xy: tuple):
+        """Show the prediction of the keypoint classifier in the CV window using an Annotator object from the Ultralytics library"""
         # Read classes in CSV file
         path = 'WarmingUp/assets/classifier_classes.csv'
 
@@ -52,8 +48,6 @@ class KeyPointClassifier(object):
             # Draw the predicted class on the CV window
             ann.text(xy, pred_class, txt_color=(0, 0, 0))
 
-    """
-    Returns a boolean; checks if the model path exists
-    """
     def is_model_available(model_path: str):
+        """Returns a boolean; checks if the model path exists"""
         return os.path.exists(model_path)

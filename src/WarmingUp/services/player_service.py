@@ -10,27 +10,21 @@ class PlayerService:
         self.players = []
         self.no_players_set = no_players_set
 
-    """
-    Creates new Player object list, with a length of the no_players_set. This only happens if the set amount of players are detected
-    """
-    def create_players(self):                
+    def create_players(self):   
+        """Creates new Player object list, with a length of the no_players_set. This only happens if the set amount of players are detected"""             
         self.players = [Player()] * self.no_players_set
         return self.players
 
-    """
-    Adds the keypoints of each detected person to the Player objects in the list
-    """
     def append_preprocessed_keypoints_to_players(self, keypoints: list):
+        """Adds the keypoints of each detected person to the Player objects in the list"""
         if (self.no_players_set == 1):
             self.players[0].keypoints = KeypointService.pre_process_keypoints(keypoints)       
         if (self.no_players_set > 1):
             for i, player in enumerate(keypoints):
                 self.players[i].keypoints = KeypointService.pre_process_keypoints(player)
 
-    """
-    Returns a boolean; checks if the no_players_set is the same as the detected amount of players
-    """
     def all_players_present(self) -> bool:
+        """Returns a boolean; checks if the no_players_set is the same as the detected amount of players"""
         return self.no_players_set == self.no_players_detected
     
     def clear_players(self):

@@ -8,10 +8,8 @@ class KeypointService:
     def __init__(self, detected_players: int) -> None:
         self.detected_players = detected_players
 
-    """
-    Draw the keypoint numbers (indexes) on the detected people. Only for testing purposes
-    """
     def show_keypoint_nrs(self, ann: Annotator, keypoints: list):
+        """Draw the keypoint numbers (indexes) on the detected people. Only for testing purposes"""
         if (self.detected_players == 1):
             for i, kp in enumerate(keypoints):
                 x = int(kp[0])
@@ -24,10 +22,8 @@ class KeypointService:
                     y = int(kp[1])
                     ann.text((x, y), str(i))
     
-    """
-    Pre-process the keypoints list by first removing the confidence rate (which is not necessary) and then converting them to relative coordinates
-    """
     def pre_process_keypoints(keypoints):
+        """Pre-process the keypoints list by first removing the confidence rate (which is not necessary) and then converting them to relative coordinates"""
         temp_keypoint_list = copy.deepcopy(keypoints)
             
         # Remove confidence rate from individual keypoints (index 2)
@@ -57,10 +53,8 @@ class KeypointService:
         for kp in keypoints:
             del kp[2]
 
-    """
-    Write the keypoints of 1 detected person to a csv file 
-    """
     def write_kp_data_to_csv(self, number, mode, keypoints):
+        """Write the keypoints of 1 detected person to a csv file """
         if mode == 0:
             pass
         if mode == 1 and (0 <= number <= 9):
@@ -71,12 +65,10 @@ class KeypointService:
                 writer.writerow([number, *keypoints])
         return
     
-    """
-    Select Application Mode. Mode 0 = default, Mode 1 = Snapshot Mode.
-    Press 's' to enter snapshot mode
-    Press 'd' to enter default mode
-    """
     def select_mode(key, mode):
+        """Select Application Mode. Mode 0 = default, Mode 1 = Snapshot Mode.\n
+        Press 's' to enter snapshot mode.\n
+        Press 'd' to enter default mode"""
         number = -1
         if key >= ord('0') and key <= ord('9'):
             number = key - ord('0')
@@ -86,10 +78,8 @@ class KeypointService:
             mode = 1
         return number, mode
     
-    """
-    Returns a boolean; checks if there are keypoints detected
-    """
     def keypoints_detected(keypoints):
+        """Returns a boolean; checks if there are keypoints detected"""
         if len(keypoints) == 0 or keypoints is None:
             return False
         return True

@@ -1,10 +1,7 @@
 import cv2
 
-"""
-A simple FPS counter. Credits to the random person on the internet that I got this from!
-"""
-
 class FPSCounterService:
+    """A simple FPS counter. Credits to the random person on the internet that I got this from!"""
     # Used to record the time when we processed last frame
     prev_frame_time = 0
     # Used to record the time at which we processed current frame
