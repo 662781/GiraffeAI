@@ -1,4 +1,5 @@
 import time
+import tkinter as tk
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -28,20 +29,27 @@ class FightSimulatorGame(CVGame):
         self.punch_types = ["jab", "uppercut", "hook"]
         self.selected_punch = "jab"
         self.elapsed_time = 0
-        self.start_time = time.time()
         self.video_capture = cv2.VideoCapture(0)
         self.combined_points = 0
         self.previous_combined_points = -1
+        self.is_game_started = False
 
     def setup(self, options):
         self.options = options
-
 
     def update(self, frame):
         self.create_players()
 
         image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         landmarks = self.pose_model.process(image)
+
+        if not self.is_game_started:
+            self.stop_game()
+            if cv2.waitKey(1) & 0xFF == ord('s'):
+                self.start_time = time.time()
+                self.is_game_started = True
+
+            return self.draw_play_button(image)
 
         self.check_and_select_punch()
 
@@ -62,9 +70,7 @@ class FightSimulatorGame(CVGame):
 
             self.elapsed_time = time.time() - self.start_time
 
-            if cv2.waitKey(1) & 0xFF == ord('q') or self.elapsed_time > 95:
-                self.should_switch = True
-                self.next_game = None
+            self.stop_game()
 
         return self.draw_on_frame(image=image, angle=angle, left_elbow_xy=left_elbow_xy, results=landmarks,
                                   player=self.players[0])
@@ -87,6 +93,25 @@ class FightSimulatorGame(CVGame):
 
             self.points = 0
             self.spawn_time = time.time()
+
+    def stop_game(self):
+        if cv2.waitKey(1) & 0xFF == ord('q') or self.elapsed_time > 95:
+            self.should_switch = True
+            self.next_game = None
+    @staticmethod
+    def draw_play_button(image):
+        image = Generics.put_text_with_custom_font(image=image, text="Hold 'S' to start the game",
+                                                   position=(120, 80),
+                                                   font_path=CVAssets.FONT_FRUIT_NINJA, font_size=35,
+                                                   font_color=(248, 210, 62), outline_color=(0, 0, 0), outline_width=2)
+
+        image = Generics.put_text_with_custom_font(image=image, text="Be Ready!",
+                                                   position=(120, 110),
+                                                   font_path=CVAssets.FONT_FRUIT_NINJA, font_size=35,
+                                                   font_color=(248, 210, 62), outline_color=(0, 0, 0), outline_width=2)
+
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        return image
 
     def check_and_select_punch(self):
         if self.elapsed_time % 5 <= 0.13:
