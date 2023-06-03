@@ -40,7 +40,7 @@ class WarmingUpGame(CVGame):
         self.players_list: list[Player] = self.pl_serv.create_players()
 
         # Instantiate prediction list
-        self.pred_classes: list[int]
+        self.pred_classes: list[int] = []
 
         # Check which exercise is chosen (Push-Up, Sit-Up, Jumping Jack, Squat)
         self.exercise: str = "PushUp"
@@ -108,9 +108,6 @@ class WarmingUpGame(CVGame):
                 # Append preprocessed keypoints to the player objects
                 self.pl_serv.append_preprocessed_keypoints_to_players(keypoints)
 
-                # Create instance of the Annotator class
-                # ann = Annotator(annotated_frame)
-
                 # Show all keypoint numbers with a custom annotation (for testing only)
                 # kp_serv.show_keypoint_nrs(ann, keypoints)
 
@@ -123,11 +120,11 @@ class WarmingUpGame(CVGame):
                         player_proc_keypoints.append(player.keypoints)
 
                 # Show the predicted class if the custom model is available (for every detected person)
+                self.pred_classes.clear()
                 classifier = KeyPointClassifier(self.model_path, num_threads=1)
                 if (KeyPointClassifier.is_model_available(self.model_path)):
-                    for i, kp_list in enumerate(player_proc_keypoints):
-                        self.pred_classes[i] = classifier(kp_list)
-                        # classifier.show_prediction(ann, pred_classes[i], (500, 20))
+                    for kp_list in player_proc_keypoints:
+                        self.pred_classes.append(classifier(kp_list))
 
                 # If 'k' is pressed and then a number between 0 - 9, save current keypoints to csv
                 # Only available if 1 person is detected
@@ -147,10 +144,12 @@ class WarmingUpGame(CVGame):
         # Load the game-UI in the CV window
         ui.draw_buttons()
 
-        # Put the score of each player in the CV window
+        # Put the score of each player on the CV window
         ui.put_score(self.players_list, [200, 50])
 
-        ui.show_prediction(self.pred_classes, (500, 20))
+        # Put the predicted class of each player on the CV window
+        pprint.pprint(self.pred_classes)
+        ui.show_prediction(self.pred_classes, (200, 200))
 
         # Place an indicator of the mode on screen if it's 1 (Snapshot Mode) and if there is only 1 player
         if self.no_players_set == 1:
