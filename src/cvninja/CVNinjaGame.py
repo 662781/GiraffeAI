@@ -16,6 +16,7 @@ import pandas as pd
 class CVNinjaGame(CVGame):
      def __init__(self):
           super().__init__()
+          # Collision types used all over the game to handle events such as object collision and object out of bounds events
           self.collision_types = {
                "limbs_player_1": 1,
                "limbs_player_2" : 2,
@@ -26,33 +27,32 @@ class CVNinjaGame(CVGame):
                "menu_option_play_again": 7,
                "void": 99, 
           }
-          self.yolo_model = YOLO()  # load an official model
+          self._initialize_assets()
 
-          self.plank = cv2.imread(CVAssets.IMAGE_PLANK, cv2.IMREAD_UNCHANGED)
-          self.rock = cv2.imread(CVAssets.IMAGE_ROCK, cv2.IMREAD_UNCHANGED)
-          self.bomb = cv2.imread(CVAssets.IMAGE_BOMB, cv2.IMREAD_UNCHANGED)
-          self.micha = cv2.imread(CVAssets.IMAGE_MISHA, cv2.IMREAD_UNCHANGED)
-          self.image_play_again = cv2.imread(CVAssets.IMAGE_MENU_CVNINJA_PLAY_AGAIN, cv2.IMREAD_UNCHANGED)
-          self.image_main_menu = cv2.imread(CVAssets.IMAGE_MENU_CVNINJA_MAIN_MENU, cv2.IMREAD_UNCHANGED)
-
-          
-
-          self.background = cv2.imread(CVAssets.IMAGE_DOJO, cv2.IMREAD_UNCHANGED)
-          self.background = cv2.cvtColor(self.background, cv2.COLOR_BGRA2RGBA)
-          # left and right
+          # set left,right and middle spawn positions
+          # todo: multiplayer will need different spawn locations for each player
           self.spawn_postitions=  [(-70, 50),(-70, 40),(-70, 30),# left corner
                                    (710, 50), (710, 40), (710, 30), # right corner
-                                   (100,-50), (300,-50), (500,-50)]
+                                   (100,-50), (300,-50), (500,-50)] # middle top
 
 
      def setup(self, options):
-          # todo: when 2 you have two 
-          self.cvninja_objects ={}
-          self.menu_options = []
-          self.menu_options.extend([MainMenuObject(self.image_main_menu, 150), MainMenuObject(self.image_play_again, 150)])
-          self.bomb_tutorial_done = False
+          #self.options = options
+          self.options["NUMBER_OF_PLAYERS"] = 2 # todo, dynamic
+          
+          self.cvninja_object_spawners ={} # Each player gets a list of object spawners assigned to him 
+          # Setup 
+          self.menu_options = [MainMenuObject(self.image_main_menu, 150), MainMenuObject(self.image_play_again, 150)]
+
+          if(self.options["NUMBER_OF_PLAYERS"] == 1):
+               self.object_spawner_rotation = [CVNinjaBomb(self.bomb, 100),CVNinjaRock(self.rock, 80), CVNinjaPlank(self.plank, 70),CVNinjaMicha(self.micha, 160)]
+          else:
+               self.object_spawner_rotation = [CVNinjaRock(self.rock, 80), CVNinjaPlank(self.plank, 70),CVNinjaMicha(self.micha, 160)]
+
+          self.bomb_tutorial_done = False # singleplayer only 
           self.stop_threads = False
-          for player_object_spawners in self.cvninja_objects:
+
+          for player_object_spawners in self.cvninja_object_spawners:
                for object_spawner in player_object_spawners:
                     for shape in object_spawner.pymunk_objects_to_draw:
                          object_spawner.pymunk_objects_to_draw.remove(shape)
@@ -60,53 +60,29 @@ class CVNinjaGame(CVGame):
           self.space = pymunk.Space()
           self.space.gravity = (0, 980)
           self.players = []
-          self.threads = [] # for spawning objecsts
           self.state_end_game = False
-          self.options["NUMBER_OF_PLAYERS"] = 1 # todo, dynamic
-
           
 
-
+ 
           for i in range(self.options["NUMBER_OF_PLAYERS"]):
-               
                player_index = str(i+1)
+               
                player = CVNinjaPlayer(self.collision_types["limbs_player_" + player_index])
-               self.cvninja_objects["Player-" + str(i+1)] =  [CVNinjaBomb(self.bomb, 100),
-                                                         CVNinjaRock(self.rock, 80),
-                                                         CVNinjaPlank(self.plank, 70),
-                                                         CVNinjaMicha(self.micha, 160)]
-               spawn_handler = threading.Thread(target=lambda: self._handle_spawns(player, self.cvninja_objects["Player-" + player_index], self.spawn_postitions))
-                                                       
+               print("Creating Player " + player_index, " ", player)
+               self.cvninja_object_spawners["Player-" + player_index] =  self.object_spawner_rotation
                self.space.add(player.line_left_hand_body, player.line_left_hand_shape)
                self.space.add(player.line_right_hand_body, player.line_right_hand_shape)
                self.space.add(player.line_left_leg_body, player.line_left_leg_shape)
                self.space.add(player.line_right_leg_body, player.line_right_leg_shape)
                self.players.append(player)
-               self.threads.append(spawn_handler)
-
-          # Determine all the options 
-          self.object_options = [index for index, _ in enumerate(self.cvninja_objects["Player-1"])]
+               
+               print("Giving thread player: ", player, " and index: ", player_index)
+               self._create_event_handlers_for_player(player_index, player)
           
-          self.background = cv2.resize(self.background, (self.options["CAMERA_WIDTH"], self.options["CAMERA_WIDTH"]))
-          handler = self.space.add_collision_handler(self.collision_types["limbs_player_1"], self.collision_types["objects_player_1"])
-          handler.data["player"] = self.players[0] # Collision needs the player to determine extra conditions (long enough slice, used 2 hands, etc.)
-          handler.begin = self.handle_collision
-
-          handler2 = self.space.add_collision_handler(self.collision_types["broken_objects"],self.collision_types["void"])
-          handler2.separate = self.out_of_bounds
-
-          handler3 = self.space.add_collision_handler(self.collision_types["objects_player_1"],self.collision_types["void"])
-          handler3.data["player"] = self.players[0]
-          handler3.separate = self.out_of_bounds
-
-          # Aftergame menus
-          handler = self.space.add_collision_handler(self.collision_types["limbs_player_1"], self.collision_types["menu_option_main_menu"])
-          handler.data["player"] = self.players[0] # Collision needs the player to determine extra conditions (long enough slice, used 2 hands, etc.)
-          handler.begin = self._handle_menu
-
-          handler = self.space.add_collision_handler(self.collision_types["limbs_player_1"], self.collision_types["menu_option_play_again"])
-          handler.data["player"] = self.players[0] # Collision needs the player to determine extra conditions (long enough slice, used 2 hands, etc.)
-          handler.begin = self._handle_menu
+      
+          # Determine all the options, use the first player for it 
+          self.object_options = [index for index, _ in enumerate(self.cvninja_object_spawners["Player-1"])]
+          
 
           # Real boundaries of the space are a bit bigger than 480p, for illusion of objects appearing in and vanishing from the screen. 
           left_segment = pymunk.Segment(self.space.static_body, (-200, 0), (-200, 800), 100)
@@ -116,15 +92,44 @@ class CVNinjaGame(CVGame):
           bottom_segment.sensor = True
           top_segment = pymunk.Segment(self.space.static_body, (-200, -100), (840, -100), 100)
           self.space.add(left_segment, right_segment, top_segment, bottom_segment)
-          for thread in self.threads:
-               thread.start()    
 
+
+          # Adding this dynamically seems to result into the last player getting all threads for himself, so manual adding for now
+          self.thread1 = threading.Thread(target=lambda: self._handle_spawns_multiplayer(self.players[0], self.cvninja_object_spawners["Player-1"], self.spawn_postitions))
+          self.thread2 = threading.Thread(target=lambda: self._handle_spawns_multiplayer(self.players[1], self.cvninja_object_spawners["Player-2"], self.spawn_postitions))
+          self.thread1.start()
+          self.thread2.start()
+
+     def _draw_countdown(self):
+          return
+     def _create_event_handlers_for_player(self,player_index, player):
+          """Creates collision and out of bounds handlers for a specific player number"""
+          handlers_collision = [] 
+          handlers_out_of_bounds = [self.space.add_collision_handler(self.collision_types["broken_objects"],self.collision_types["void"])]
+          handlers_out_of_bounds[-1].separate = self.out_of_bounds
+
+          handlers_collision.append(self.space.add_collision_handler(self.collision_types["limbs_player_" + player_index], self.collision_types["objects_player_" + player_index]))
+          handlers_collision[-1].data["player"] = player
+          handlers_collision[-1].begin = self.handle_collision
+
+          handlers_collision.append(self.space.add_collision_handler(self.collision_types["objects_player_" + player_index],self.collision_types["void"]))
+          handlers_collision[-1].data["player"] = player
+          handlers_collision[-1].separate = self.out_of_bounds
+
+          # Aftergame menus
+          handlers_collision.append(self.space.add_collision_handler(self.collision_types["limbs_player_" + player_index], self.collision_types["menu_option_main_menu"]))
+          handlers_collision[-1].data["player"] = self.players[0] # Collision needs the player to determine extra conditions (long enough slice, used 2 hands, etc.)
+          handlers_collision[-1].begin = self._handle_menu
+
+          handlers_collision.append(self.space.add_collision_handler(self.collision_types["limbs_player_" + player_index], self.collision_types["menu_option_play_again"]))
+          handlers_collision[-1].data["player"] = self.players[0] # Collision needs the player to determine extra conditions (long enough slice, used 2 hands, etc.)
+          handlers_collision[-1].begin = self._handle_menu
 
      def cleanup(self):
           # todo: change into dynamic
           self.stop_threads == False
-          for player_index in range(len(self.cvninja_objects)):
-               for object_spawner in self.cvninja_objects["Player-" + str(player_index+1)]:
+          for player_index in range(len(self.cvninja_object_spawners)):
+               for object_spawner in self.cvninja_object_spawners["Player-" + str(player_index+1)]:
                     for shape in object_spawner.pymunk_objects_to_draw:
                          object_spawner.pymunk_objects_to_draw.remove(shape)
           super().cleanup()
@@ -139,15 +144,23 @@ class CVNinjaGame(CVGame):
           image.flags.writeable = True  
           self.space.step(1/60)
           image = Generics.overlayPNG(image, self.background, pos=[0, 0])
-          self._draw_players(image, results)
+
+          # Setup a Split screen for multiplayer
+          region_width = self.options["CAMERA_WIDTH"] // self.options["NUMBER_OF_PLAYERS"]
+          for i in range(1, self.options["NUMBER_OF_PLAYERS"]):
+               x = region_width * i
+               cv2.line(image, (x, 0), (x, self.options["CAMERA_HEIGHT"]), (0, 0, 0), 2) 
+
+          self._update_players(image, results)
 
           image = cv2.cvtColor(image, cv2.COLOR_RGBA2BGR)
-          cv2.putText(image, "FPS:" + str(display_fps), (320, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA) 
+          cv2.putText(image, "FPS:" + str(display_fps), (460, 30), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA) 
 
           for i, player in enumerate(self.players):
                image = self._draw_stats(image,player, 10 + (i * (self.options["CAMERA_WIDTH"] / 2)))
-               if(player.strikes >= 3):
+               if(player.strikes >= 10000):
                     image = self._draw_final_screen(image)
+                    self.stop_threads = True
                     for menu_item in self.menu_options:
                          for shape in menu_item.pymunk_objects_to_draw:
                               image = Generics.draw_pymunk_object_in_opencv(image, shape)
@@ -156,8 +169,8 @@ class CVNinjaGame(CVGame):
                          self.next_game = "Main Menu"
                     return image
               
-          for player_index in range(len(self.cvninja_objects)):
-               for object_spawner in self.cvninja_objects["Player-" + str(player_index+1)]:
+          for player_index in range(len(self.cvninja_object_spawners)):
+               for object_spawner in self.cvninja_object_spawners["Player-" + str(player_index+1)]:
                     for shape in object_spawner.pymunk_objects_to_draw:
                          image = Generics.draw_pymunk_object_in_opencv(image, shape)
 
@@ -166,11 +179,31 @@ class CVNinjaGame(CVGame):
                self.next_game = "Main Menu"
           return image
 
-     def _draw_players(self, image, results):
+     def _initialize_assets(self):
+          """Load and setup the assets required to play the game"""
+          self.yolo_model = YOLO()  # load an official model
+
+          self.plank = cv2.imread(CVAssets.IMAGE_PLANK, cv2.IMREAD_UNCHANGED)
+          self.rock = cv2.imread(CVAssets.IMAGE_ROCK, cv2.IMREAD_UNCHANGED)
+          self.bomb = cv2.imread(CVAssets.IMAGE_BOMB, cv2.IMREAD_UNCHANGED)
+          self.micha = cv2.imread(CVAssets.IMAGE_MISHA, cv2.IMREAD_UNCHANGED)
+          self.image_play_again = cv2.imread(CVAssets.IMAGE_MENU_CVNINJA_PLAY_AGAIN, cv2.IMREAD_UNCHANGED)
+          self.image_main_menu = cv2.imread(CVAssets.IMAGE_MENU_CVNINJA_MAIN_MENU, cv2.IMREAD_UNCHANGED)
+
+          self.background = cv2.imread(CVAssets.IMAGE_DOJO, cv2.IMREAD_UNCHANGED)
+          self.background = cv2.cvtColor(self.background, cv2.COLOR_BGRA2RGBA)
+          self.background = cv2.resize(self.background, (self.options["CAMERA_WIDTH"], self.options["CAMERA_WIDTH"]))
+
+
+     def _update_players(self, image, results):
+          """Update and draw each player marked by the YOLO results"""
           try:
                for i, result in enumerate(results):
                     keypoints = result.keypoints.cpu().numpy()[0]
+                    # Depending on the position in the results, we assign the results to update for a specific player
                     player_index = int(keypoints[2][0]) > (self.options["CAMERA_WIDTH"] / self.options["NUMBER_OF_PLAYERS"]) 
+                    cv2.putText(image, "Player-" + str(int(player_index)+1), (int(keypoints[2][0]), int(keypoints[2][1])), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA) 
+
                     self.players[player_index].update_tracking(keypoints)
                     Generics.get_player_trailing(self.players[player_index], image)
                     Generics.draw_stick_figure(image, keypoints)
@@ -180,26 +213,33 @@ class CVNinjaGame(CVGame):
                pass
         
      def _draw_stats(self, image, player, x):
-          strikes = player.strikes
           """Draws the strike crosses and colors them red if the player has a strike"""
-          font_color_white = (255,255,255)
-          font_color_red = (0, 0,255)
-          outline_color = (0,0,0)
           y = 35
-          image = Generics.put_text_with_custom_font(image, "X", (x,y), CVAssets.FONT_FRUIT_NINJA,
-                                                       25, font_color = font_color_red if strikes >= 1 else  font_color_white
-                                                       , outline_color = outline_color, outline_width=3)
-          image = Generics.put_text_with_custom_font(image, "X", (x+25,y), CVAssets.FONT_FRUIT_NINJA,
-                                                       40, font_color = font_color_red if strikes >= 2 else  font_color_white 
-                                                       , outline_color = outline_color, outline_width=3)
-          image = Generics.put_text_with_custom_font(image, "X", (x +60,y), CVAssets.FONT_FRUIT_NINJA,
-                                                       60, font_color = font_color_red if strikes >= 3 else  font_color_white 
-                                                       , outline_color = outline_color, outline_width=3)
-          
-          # score
-          image = Generics.put_text_with_custom_font(image, "Score: " + str(player.score), (x,10), CVAssets.FONT_FRUIT_NINJA,
-                                                       25, (0,0,0), outline_color = (255, 255, 255), outline_width=2)
-          
+          black = (0,0,0)
+          white = (255,255,255)
+          red = (0, 0,255)
+          image = Generics.put_text_with_ninja_font(image, "Score: " + str(player.score), (x,10),
+                                                  size_class = "Small",
+                                                  font_color = black,
+                                                  outline_color = white,
+                                                  outline_width=2)
+          if(self.options["NUMBER_OF_PLAYERS"] == 1):
+               strikes = player.strikes
+               image = Generics.put_text_with_ninja_font(image, "X", (x,y),
+                                                            size_class = "Small",
+                                                            font_color = red if strikes >= 1 else  white,
+                                                            outline_color = black, 
+                                                            outline_width=3)
+               image = Generics.put_text_with_ninja_font(image, "X", (x+25,y),
+                                                            size_class = "Medium", 
+                                                            font_color = red if strikes >= 2 else  white,
+                                                            outline_color = black,
+                                                            outline_width=3)
+               image = Generics.put_text_with_ninja_font(image, "X", (x +60,y),
+                                                            size_class = "Large", 
+                                                            font_color = red if strikes >= 3 else  white, 
+                                                            outline_color = black, 
+                                                            outline_width=3)
           return image
      
      def _draw_final_screen(self, image):
@@ -208,26 +248,13 @@ class CVNinjaGame(CVGame):
                self.menu_options[0].spawn_object(self.space, self.collision_types["menu_option_main_menu"], position = (100, 80))
                self.menu_options[1].spawn_object(self.space, self.collision_types["menu_option_play_again"], position = (400,80))
                self.state_end_game = True
-          return image              
-
-          """Draw the menu options"""
-          text = "  Rank  Name  Score  \n"
-          for i, (_, row) in enumerate(self.top_scores.iterrows()):
-               name = row['name']
-               score = row['score']
-               text += f'     {i+1}.      {name}     {score}\n'
-          
-          image = Generics.put_text_with_custom_font(image, text, (230, 50), CVAssets.FONT_FRUIT_NINJA,
-                                                       25, font_color = (0,0, 0))
           return image
 
      def _handle_spawns(self, player, object_spawners, spawn_postitions):
+          print("Creating a thread for:", player)
           while self.stop_threads == False:
-               for i in range(25):
-                    if(player.strikes >= 3):
-                         self._cleanup_object_spawners(object_spawners)
-                         return  
-                    time.sleep(.2)
+               
+               time.sleep(5)
 
                random_spawn = spawn_postitions[random.randint(0,len(spawn_postitions)-1)]
                options = [0,1,2,3]
@@ -260,7 +287,34 @@ class CVNinjaGame(CVGame):
                          position = random_spawn
                     )
                     self.bomb_tutorial_done = True
-          
+
+     def _handle_spawns_multiplayer(self, player, object_spawners, spawn_postitions):
+          """Handle spawning mechanics for multiplayer scenario"""
+          print("Multiplayer: Creating a thread for:", player)
+          while self.stop_threads == False:
+               time.sleep(4)
+
+               random_spawn = spawn_postitions[random.randint(0,len(spawn_postitions)-1)]
+               options = [0,1,2]
+               weights = [60, 60, 5] 
+               
+               if(player.score <= 250):
+                    random_object = random.choices(options, weights)[0]
+                    object_spawners[random_object].spawn_object(self.space, self.collision_types["objects_player_" + str(player.collision_type)], position = random_spawn)
+
+               else:
+                    max_objects = 4
+                    scaling_factor = min(player.score // 150, max_objects)
+                    for _ in range(scaling_factor):
+                         random_object = random.choices(options, weights)[0]
+                         object_spawners[random_object].spawn_object(
+                              self.space,
+                              self.collision_types["objects_player_" + str(player.collision_type)],
+                              position=random_spawn
+                         )
+                         random_spawn = spawn_postitions[random.randint(0,len(spawn_postitions)-1)]
+                         time.sleep(.8)
+
      def _cleanup_object_spawners(self, object_spawners):
           # Cleanup an object spawner for a given player's list  of object_spawners
           for object_spawner in object_spawners:
@@ -304,9 +358,9 @@ class CVNinjaGame(CVGame):
                     self.next_game = "CVNinja"
                elif(shape.collision_type == self.collision_types["menu_option_main_menu"]):
                     self.next_game = "Main Menu"
-
+          return True
      def out_of_bounds(self, arbiter, space, data):
-         #print("__________________ OUT OF BOUNDS __________________")
+          print("__________________ OUT OF BOUNDS __________________")
           shape = arbiter.shapes[0]
           space.remove(shape, shape.body)
           try:
@@ -317,7 +371,7 @@ class CVNinjaGame(CVGame):
           except:
                print("Object was not in the list to remove")
           
-          #print("Current objects on screen: ", len(self.cvninja_objects["Player-1"][0].pymunk_objects_to_draw) )
+          #print("Current objects on screen: ", len(self.cvninja_object_spawners["Player-1"][0].pymunk_objects_to_draw) )
           #print("Shape ",arbiter.shapes[0] ," has left the screen!")
           
           return True
