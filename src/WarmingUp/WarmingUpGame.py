@@ -148,7 +148,6 @@ class WarmingUpGame(CVGame):
         ui.put_score(self.players_list, (200, 50))
 
         # Put the predicted class of each player on the CV window
-        print("Predicted Classes per player: ", self.pred_classes)
         ui.show_prediction(self.pred_classes, (200, 200))
 
         # Place an indicator of the mode on screen if it's 1 (Snapshot Mode) and if there is only 1 player

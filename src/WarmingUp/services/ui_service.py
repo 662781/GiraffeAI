@@ -22,8 +22,8 @@ class UIService:
         """Show the prediction of the keypoint classifier in the CV window using an Annotator object from the Ultralytics library"""
         for i, class_nr in enumerate(pred_classes):
             pred_class = ""
-            for i, class_str in enumerate(KeyPointClassifier.get_classes()):
-                if i == class_nr:
+            for j, class_str in enumerate(KeyPointClassifier.get_classes()):
+                if j == class_nr:
                     pred_class = class_str
             # Draw the predicted class on the CV window
             cv2.putText(self.frame, "Prediction Player {}: {}".format(i+1, pred_class), xy, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
