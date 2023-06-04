@@ -27,6 +27,13 @@ class UIService:
                     pred_class = class_str
             # Draw the predicted class on the CV window
             cv2.putText(self.frame, "Prediction Player {}: {}".format(i+1, pred_class), xy, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+
+    def on_player_amount_change(player_amt):
+        return player_amt
+    
+    def draw_player_amt_select():
+        # Parameters: trackbar name, window name, initial value, maximum value, callback function
+        cv2.createTrackbar("Player Amount", "CVDojo", 1, 4, UIService.on_player_amount_change)
     
     def draw_buttons(self):
         # Button coordinates and dimensions

@@ -10,7 +10,7 @@ from WarmingUp import WarmingUpGame
 
 from shared.utils import Generics, CVAssets
 from shared.model import CVNinjaPlayer
-from menus import CVMainMenu, CVNinjaMenu, RockPaperScissorsMenu
+from menus import CVMainMenu, CVNinjaMenu, RockPaperScissorsMenu, WarmingUpMenu
 
 
 
@@ -47,7 +47,7 @@ class GameManager:
 
         # "Rock Paper Scissors": RockPaperScissorsGame(), "Rock Paper Scissors AI": RockPaperScissorsAIGame(), "Rock Paper Scissors Menu": RockPaperScissorsMenu(),
 
-        "Warming Up": WarmingUpGame()
+        "Warming Up": WarmingUpGame(), "Warming Up Menu": WarmingUpMenu()
     }
     def __init__(self):
         self.current_game = None

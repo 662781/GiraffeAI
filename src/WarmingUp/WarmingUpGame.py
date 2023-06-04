@@ -51,6 +51,8 @@ class WarmingUpGame(CVGame):
 
         # Set the default mode
         self.mode: int = 0
+
+        UIService.draw_player_amt_select()
     
     def update(self, frame):
         # Check for user input
