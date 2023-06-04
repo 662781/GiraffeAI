@@ -13,6 +13,14 @@ class Generics():
     """
 
     # Predefined font workaround for custom font method
+    fonts = {
+            "Extra Small" : ImageFont.truetype("shared/assets/go3v2.ttf", 15),
+            "Small" : ImageFont.truetype("shared/assets/go3v2.ttf", 25),
+            "Medium": ImageFont.truetype("shared/assets/go3v2.ttf", 40),
+            "Large": ImageFont.truetype("shared/assets/go3v2.ttf", 60),
+            "Extra Large": ImageFont.truetype("shared/assets/go3v2.ttf", 80)
+    }
+    # deprecated font 
     font = ImageFont.truetype("shared/assets/go3v2.ttf", 80)
     
     @staticmethod
@@ -171,13 +179,17 @@ class Generics():
         #vertices = [(v+pymunk_object.body.position) for v in pymunk_object.get_vertices()]
         #vertices = np.array(vertices, dtype=np.int32)
         #cv2.fillPoly(background, [vertices], (255, 255, 255))
+        if(pymunk_object.collision_type == 4):
+            vertices = [(v+pymunk_object.body.position) for v in pymunk_object.get_vertices()]
+            vertices = np.array(vertices, dtype=np.int32)
+            cv2.fillPoly(background, [vertices], (255, 255, 255))
         pos = pymunk_object.body.position
         x, y = int(pos.x), int(pos.y)
         background = Generics.overlayPNG(background, pymunk_object.image, [x, y])
         return background
 
-    @staticmethod
-    def put_text_with_ninja_font(image, text, position, font_color, outline_color = (255, 255, 255), outline_width=2):
+    @staticmethod 
+    def put_text_with_ninja_font(image, text, position, font_color, outline_color = (255, 255, 255), outline_width=2, size_class = "Extra Large"):
         """Adds text to an image using the preset Fruit Ninja Font and Size.
         
         Sadly, opencv does not support custom fonts without recompiling the library with the required 3rd party flags. 
@@ -187,6 +199,7 @@ class Generics():
         Args:
             image (ndarray): The image to which the text will be added.
             text (str): The text to be added.
+            size_class (str): The keyword for the size you want: Extra Small, Small, Medium, Large, Extra Large
             position (tuple): The position (x, y) where the text will be placed on the image.
             font_path (str): The file path to the custom font.
             font_size (int): The size of the font.
@@ -197,7 +210,7 @@ class Generics():
         img_pil = Image.fromarray(image)
         draw = ImageDraw.Draw(img_pil)
         outline_position = (50, 50)
-        draw.text(position, text, font=Generics.font, fill=font_color, stroke_width = outline_width, stroke_fill = outline_color)
+        draw.text(position, text, font=Generics.fonts[size_class], fill=font_color, stroke_width = outline_width, stroke_fill = outline_color)
         return np.array(img_pil)
 
     @staticmethod
@@ -227,7 +240,6 @@ class Generics():
         font = ImageFont.truetype(font_path, font_size)
         draw.text(position, text, font=font, fill=font_color, stroke_width = outline_width, stroke_fill = outline_color)
         return np.array(img_pil)
-
 
 
     @staticmethod
