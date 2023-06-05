@@ -86,8 +86,8 @@ class WarmingUpGame(CVGame):
 
         # Draw the keypoints (only for testing) and add class name to visualize the current detected pose of all players in the CV window
         # Draws the bounding box & keypoints from the YOLOv8 model
-        # annotated_frame = results.plot()
-        annotated_frame = frame
+        annotated_frame = results.plot()
+        # annotated_frame = frame
         
         # Get the keypoints in a easier iterable list
         # Shape when 1 person is detected: [[x, y, conf], ..]
@@ -134,9 +134,9 @@ class WarmingUpGame(CVGame):
                     kp_serv.write_kp_data_to_csv(number, self.mode, player_proc_keypoints[0])
 
                 # Start keeping score of the chosen exercise for each player. Add the score to each players total.
-                for i, player in enumerate(self.players_list):
-                    if(player.does_exercise(self.exercise, self.pred_classes[i]) == True):
-                        player.score += 1
+                # for i, player in enumerate(self.players_list):
+                #     if(player.does_exercise(self.exercise, self.pred_classes[i]) == True):
+                #         player.score += 1
             else:
                 UIService.show_pause_menu()
 
