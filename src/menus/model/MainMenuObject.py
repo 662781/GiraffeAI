@@ -32,7 +32,10 @@ class MainMenuObject(CVNinjaObject):
         # ignore contact point for now
 
         # remove the collided "whole" object from draw list
-        self.pymunk_objects_to_draw.remove(shape) 
+        try:
+            self.pymunk_objects_to_draw.remove(shape) 
+        except:
+            pass
         # take the cut object and set it to spawn 
         body = pymunk.Body(1, 100)
         shape_piece1 = pymunk.Poly(body, self.images_vertices["HORIZONTAL_SPLICE_LEFT"][1])

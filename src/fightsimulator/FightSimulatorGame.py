@@ -100,7 +100,7 @@ class FightSimulatorGame(CVGame):
     def check_for_game_stop(self):
         if cv2.waitKey(1) & 0xFF == ord('q') or self.elapsed_time > 95:
             self.should_switch = True
-            self.next_game = None
+            self.next_game = "Main Menu"
 
     @staticmethod
     def draw_play_button(image):

@@ -51,7 +51,7 @@ class GameManager:
 
     def __init__(self):
         self.current_game = None
-        self.cap = cv2.VideoCapture(1)
+        self.cap = cv2.VideoCapture(0)
         self.loading_image = cv2.imread(CVAssets.IMAGE_LOADING, cv2.IMREAD_UNCHANGED)
 
         camera_width = 640

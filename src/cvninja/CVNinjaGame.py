@@ -231,7 +231,7 @@ class CVNinjaGame(CVGame):
 
                random_spawn = spawn_postitions[random.randint(0,len(spawn_postitions)-1)]
                options = [0,1,2,3]
-               weights = [40, 60, 60, 5] 
+               weights = [40, 60, 60, 1] 
                
                if(player.score <= 250):
                     one_time_weights = [0, 50, 50, 5] 
