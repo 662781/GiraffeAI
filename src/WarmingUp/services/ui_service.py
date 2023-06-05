@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 from WarmingUp.services.keypoint_classifier import KeyPointClassifier
 class UIService:
     frame = None
@@ -15,8 +16,15 @@ class UIService:
         if mode == 1:
             cv2.putText(self.frame, "Snapshot Mode", xy, cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
-    def show_pause_menu():
-        print("Game Paused: Not enough players detected!")
+    def show_pause_menu(self, frame):
+        print("Game Paused: Too many of not enough players detected!")
+        return self.create_faded_frame(frame)
+    
+    def create_faded_frame(self, frame):
+        overlay = np.ones(frame.shape, dtype="uint8") * 127
+        alpha = 0.7 
+        frame = cv2.addWeighted(frame, 1-alpha, overlay, alpha, 0)
+        return frame
 
     def show_prediction(self, pred_classes: list[int], xy: tuple):
         """Show the prediction of the keypoint classifier in the CV window using an Annotator object from the Ultralytics library"""

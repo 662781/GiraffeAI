@@ -51,8 +51,6 @@ class WarmingUpGame(CVGame):
 
         # Set the default mode
         self.mode: int = 0
-
-        # UIService.draw_player_amt_select()
     
     def update(self, frame):
         # Check for user input
@@ -138,7 +136,8 @@ class WarmingUpGame(CVGame):
                     if(player.does_exercise(self.exercise, self.pred_classes[i]) == True):
                         player.score += 1
             else:
-                UIService.show_pause_menu()
+                ui = UIService(annotated_frame)
+                return ui.show_pause_menu(annotated_frame)
 
         # Load a new instance of the UIService class
         ui = UIService(annotated_frame)
