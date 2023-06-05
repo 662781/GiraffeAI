@@ -198,16 +198,23 @@ class CVNinjaGame(CVGame):
      def _update_players(self, image, results):
           """Update and draw each player marked by the YOLO results"""
           try:
-               for i, result in enumerate(results):
-                    keypoints = result.keypoints.cpu().numpy()[0]
-                    # Depending on the position in the results, we assign the results to update for a specific player
-                    player_index = int(keypoints[2][0]) > (self.options["CAMERA_WIDTH"] / self.options["NUMBER_OF_PLAYERS"]) 
-                    cv2.putText(image, "Player-" + str(int(player_index)+1), (int(keypoints[2][0]), int(keypoints[2][1])), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA) 
+               some_count = 0
 
-                    self.players[player_index].update_tracking(keypoints)
-                    Generics.get_player_trailing(self.players[player_index], image)
-                    Generics.draw_stick_figure(image, keypoints)
-                    self.players[player_index].reset_keypoints()
+               for result in results:
+                    for i in range(2):
+                         print("Result ",i, ": ",result)
+                         
+                         #print("player: ", i)
+                         keypoints = result.keypoints[i].cpu().numpy()
+                         # some_count +=1
+                         # Depending on the position in the results, we assign the results to update for a specific player
+                         player_index = int(keypoints[2][0]) > (self.options["CAMERA_WIDTH"] / self.options["NUMBER_OF_PLAYERS"]) 
+                         cv2.putText(image, "Player-" + str(int(player_index)+1), (int(keypoints[2][0]), int(keypoints[2][1])), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA) 
+
+                         self.players[player_index].update_tracking(keypoints)
+                         Generics.get_player_trailing(self.players[player_index], image)
+                         Generics.draw_stick_figure(image, keypoints)
+                         self.players[player_index].reset_keypoints()
           except Exception:
                traceback.print_exc()
                pass
