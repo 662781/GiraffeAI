@@ -125,7 +125,7 @@ class CVMainMenu(CVGame):
 
                     # DON'T HAVE A MENU FOR YOUR GAME? SET YOUR OPTIONS IN THE CORRECT IF STATEMENT: self.next_game_options["OPTION"] = "something"
                     if(shape.collision_type == 1):
-                        self.next_game = "Warming-up"
+                        self.next_game = "Warming Up"
                     elif(shape.collision_type == 2):
                         self.next_game = "CVNinja Menu"
                     elif(shape.collision_type == 4):
