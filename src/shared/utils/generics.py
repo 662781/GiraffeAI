@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import pymunk
 from PIL import ImageFont, ImageDraw, Image
 
 class Generics():
@@ -245,11 +246,43 @@ class Generics():
         player.line_right_leg_shape.unsafe_set_vertices([(player.right_foot_track_points[-1]), (player.right_foot_track_points[0])])
         player.line_left_hand_shape.unsafe_set_vertices([(player.left_hand_track_points[-1]),(player.left_hand_track_points[0])])
         player.line_right_hand_shape.unsafe_set_vertices([(player.right_hand_track_points[-1]),(player.right_hand_track_points[0])])
+   
 
-        cv2.line(image, player.left_hand_track_points[-1], player.left_hand_track_points[0], (0, 0, 255), 5)
-        cv2.line(image, player.right_hand_track_points[-1], player.right_hand_track_points[0], (0, 0, 255), 5)
-        cv2.line(image, player.right_foot_track_points[-1], player.right_foot_track_points[0], (0, 0, 255), 5)
-        cv2.line(image, player.left_foot_track_points[-1], player.left_foot_track_points[0], (0, 0, 255), 5)
+        # cv2.line(image, player.left_hand_track_points[-1], player.left_hand_track_points[0], (0, 0, 255), 5)
+        # cv2.line(image, player.right_hand_track_points[-1], player.right_hand_track_points[0], (0, 0, 255), 5)
+        # cv2.line(image, player.right_foot_track_points[-1], player.right_foot_track_points[0], (0, 0, 255), 5)
+        # cv2.line(image, player.left_foot_track_points[-1], player.left_foot_track_points[0], (0, 0, 255), 5)
+
+        shapes = [player.line_left_hand_shape, player.line_right_hand_shape,player.line_left_leg_shape, player.line_right_leg_shape]
+        for shape in shapes:
+            vertices = [(v+shape.body.position) for v in shape.get_vertices()]
+            vertices = np.array(vertices, dtype=np.int32)
+            cv2.fillPoly(image, [vertices], (0, 255, 0))
+            # x1,y1 = int(shape.get_vertices()[0].x), int(shape.get_vertices()[0].y)
+            # x2,y2 = int(shape.get_vertices()[1].x), int(shape.get_vertices()[1].y)
+
+            # cv2.line(image, (x1,y1) ,(x2,y2) , (0,255,0),1)
+
+    @staticmethod
+    def determine_collision_side(object_pos, collision_pos):
+        object_x, object_y = object_pos
+        collision_x, collision_y = collision_pos
+
+        # Calculate the difference between object position and collision point
+        diff_x = collision_x - object_x
+        diff_y = collision_y - object_y
+
+        # Determine the side of collision based on the differences
+        if abs(diff_x) > abs(diff_y):
+            if diff_x > 0:
+                return 'right'
+            else:
+                return 'left'
+        else:
+            if diff_y > 0:
+                return 'bottom'
+            else:
+                return 'top'
 
     @staticmethod
     def draw_stick_figure(image, keypoints):
