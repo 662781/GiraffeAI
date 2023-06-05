@@ -1,7 +1,10 @@
 import cv2
-from shared.utils import Generics
+from shared.utils import Generics, CVAssets
 import pymunk
 import numpy as np
+import time
+from playsound import playsound
+
 
 '''
 The goal of this object is to be created once and used constantly (at random), primarily for the CVNinja game
@@ -70,7 +73,7 @@ class CVNinjaObject():
         """
         self.images_vertices["WHOLE"] = (self.image, Generics.get_vertices_by_image(self.image))
 
-    def spawn_object(self, space, collision_type, position=(50,50)):
+    def spawn_object(self, space, collision_type, position=(50,50), play_sound = False):
         """Spawn an object and append it to the list of objects to be drawn.
 
         This method spawns a physics object in the given pymunk space with the specified
@@ -83,7 +86,7 @@ class CVNinjaObject():
             position (Tuple[float,float]): The position of the object (default: (50, 50)).
             
         Returns:
-            None
+            The pymunk_shape that was spawned 
         """
         body = pymunk.Body(1, 100)
         body.position = position
@@ -93,4 +96,81 @@ class CVNinjaObject():
         shape.collision_type = collision_type
         space.add(shape, body)
         shape.image = self.image
+        shape.spawn_time= time.time()
         self.pymunk_objects_to_draw.append(shape)
+        if play_sound:
+            playsound(CVAssets.AUDIO_OBJECT_SPAWN, block = False)
+        # optional return of the object
+        return shape
+
+    def collision_requirements_are_met(self, player = None, collided_shape = None):
+        """Used by an child object to set their own requirements before the object hit is valid"""
+        return True
+
+    def calculate_score(self, shape, double_points:bool = False):
+        """Calculate score based on the time it took to cut the object, score can be doubled"""
+        baseline_score = 10
+        max_time_limit = 10
+        time_taken =  time.time() - shape.spawn_time
+        time_taken = round(time_taken, 2)
+        if (time_taken < 0.09): # must be lucky hit, too lucky
+            time_taken += 0.2
+        time_factor = max_time_limit / time_taken
+        
+        score = int(time_factor * baseline_score * (double_points+1)) # double_points is either 0 or 1, + 1 means score is doubled or remains the same
+        print("With a time of ", time_taken, " Score is calculated as:")
+        print(time_factor, " * ", baseline_score, " * ", "(", double_points+1, ")" )
+        print("Yields ", score)
+        return score
+
+
+    def _get_spliced_image_vertices_combo(self, amount_of_slices: int = 2, start_diagonally: bool = False):
+        """Helper method to calculate to get the sliced images and their vertices in one array
+           Originally we setup pieces of the image by cutting them out of the image and adjusting the position of the pieces relative
+            to where the cut was made.
+           Now we figured out that by keeping the original image size with zeros copy, we can put the part of the image on it,
+           and now the original position can stay the same, which saves a lot of headaches calculating new postions. 
+        
+        Args:
+            amount_of_slices (int): The amount of slices of the object you want to have
+
+            start_diagonally (bool): Tell the function to first cut the object in two diagonally (bottom left to top right). 
+                                     This will result in double the amount_of_slices you request: 2 slices will result in 4 etc. 
+        """
+        results = []
+        height = self.image.shape[0]
+        width = self.image.shape[1]
+        # Depending on whether we start diagonal or not, we use either the width (shape[1]) or height (shape[0])
+        
+        slice_metric = height // amount_of_slices
+        base_images = [self.image]
+        if start_diagonally:
+            # An initial splice diagonally, each of which will be cut into the number of slices requested
+            diagonal_splice_left = np.zeros_like(self.image, dtype=np.uint8)
+            diagonal_splice_right = np.zeros_like(self.image, dtype=np.uint8)
+            for i in range(self.size):
+                diagonal_splice_left[i, :self.size-i] = self.image[i, :self.size-i]
+                diagonal_splice_right[i, self.size-i:] = self.image[i, self.size-i:]
+            base_images = [diagonal_splice_left, diagonal_splice_right]
+        
+            for base_image in base_images:
+                for i in range(amount_of_slices):
+                    horizontal_slice = np.zeros_like(base_image, dtype=np.uint8)
+                    start_row = i * slice_metric
+                    end_row = (i + 1) * slice_metric
+                    horizontal_slice[start_row:end_row, :] = base_image[start_row:end_row, :]
+                    results.append((horizontal_slice, Generics.get_vertices_by_image(horizontal_slice)))
+        else:
+            slice_width = width // amount_of_slices
+            for i in range(0, width, slice_width):
+                vertical_slice = np.zeros_like(self.image, dtype=np.uint8)
+                # Calculate the start and end coordinates of the slice
+                start_x = i
+                end_x = i + slice_width
+
+                # Extract the slice from the image
+                vertical_slice[:, start_x:end_x, :] = self.image[:, start_x:end_x, :]
+                results.append((vertical_slice, Generics.get_vertices_by_image(vertical_slice)))
+
+        return results
+            

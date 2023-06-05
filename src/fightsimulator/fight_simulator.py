@@ -3,255 +3,245 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import math
+import random
 
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
 
-# Initialize pose model
-pose_model = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
 
-# Initialize video capture
-video_capture = cv2.VideoCapture(0)
+class PunchGame:
+    def __init__(self):
+        self.mp_drawing = mp.solutions.drawing_utils
+        self.mp_pose = mp.solutions.pose
+        self.pose_model = self.mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
+        self.video_capture = cv2.VideoCapture(0)
+        self.number_of_players = 1
+        self.players = []
+        self.min_visiblity = 0.5
+        self.cooldown_duration = 1
+        self.last_punch_time = 0
+        self.uppercut_timer = 0
+        self.hook_timer = 0
+        self.punch_types = ["jab", "uppercut", "hook"]
+        self.selected_punch = "jab"
+        self.elapsed_time = 0
 
-number_of_players = 1
-players = []
+    class Player:
+        def __init__(self):
+            self.left_hand_track_points = []
+            self.left_hand_track_lengths = []
+            self.left_hand_track_current = 0
+            self.left_hand_track_previous_point = 0, 0
 
-# Initialize punch counters
-number_of_jabs = 0
-number_of_hooks = 0
-number_of_uppercuts = 0
-min_visiblity = 0.7
+            self.score = {
+                "jab": 0,
+                "uppercut": 0,
+                "hook": 0
+            }
 
-stage = {"jab": "reset", "hook": "reset", "uppercut": "reset"}
+            self.points = 0
+            self.spawn_time = time.time()
 
+    def select_random_punch(self):
+        punch_types = ["jab", "uppercut", "hook"]
+        probabilities = [4, 1, 1]  # Probabilities of each punch type
 
-class Player:
-    left_hand_track_points = []
-    left_hand_track_lengths = []
-    left_hand_track_current = 0
-    left_hand_track_previous_point = 0, 0
+        # Create a weighted list of punches based on probabilities
+        weighted_punches = []
+        for i, punch in enumerate(punch_types):
+            weighted_punches.extend([punch] * probabilities[i])
 
-    right_hand_track_points = []
-    right_hand_track_lengths = []
-    right_hand_track_current = 0
-    right_hand_track_previous_point = 0, 0
+        # Select a random punch from the weighted list
+        random_punch = random.choice(weighted_punches)
+        print("Selected punch:", random_punch)
+        self.selected_punch = random_punch
 
-    right_foot_track_points = []
-    right_foot_track_lengths = []
-    right_foot_track_current = 0
-    right_foot_track_previous_point = 0, 0
+    def get_moving_average(self, points, number_of_last_points):
+        if len(points) < number_of_last_points:
+            return points[-1][0]  # Return the last point if not enough points are available
 
-    left_foot_track_points = []
-    left_foot_track_lengths = []
-    left_foot_track_current = 0
-    left_foot_track_previous_point = 0, 0
+        sum_x = sum(point[0][0] for point in points[-number_of_last_points:])
+        sum_y = sum(point[0][1] for point in points[-number_of_last_points:])
 
-    score = {"jab": 0, "hook": 0, "uppercut": 0}
-    spawn_time = time.time()
+        return int(sum_x / number_of_last_points), int(sum_y / number_of_last_points)
 
+    def get_direction(self, player, number_of_points_to_track):
+        if len(player.left_hand_track_points) < 2:
+            return 0, 0  # Return 0, 0 if not enough points are available
 
-def moving_average(points, n):
-    if len(points) < n:
-        return points[-1][0]  # Return the last point if not enough points are available
+        current_avg = self.get_moving_average(points=player.left_hand_track_points,
+                                              number_of_last_points=number_of_points_to_track)
+        prev_avg = self.get_moving_average(points=player.left_hand_track_points[:-1],
+                                           number_of_last_points=number_of_points_to_track)
+        dx = current_avg[0] - prev_avg[0]
+        dy = current_avg[1] - prev_avg[1]
 
-    sum_x, sum_y = 0, 0
-    for i in range(-n, 0):
-        sum_x += points[i][0][0]
-        sum_y += points[i][0][1]
+        return dx, dy
 
-    return int(sum_x / n), int(sum_y / n)
+    def track_left_hand(self, player, landmarks, width, height):
+        min_detection_accuracy = 0.8
+        left_index = landmarks[self.mp_pose.PoseLandmark.LEFT_INDEX.value]
+        cx_left, cy_left = int(left_index.x * width), int(left_index.y * height)
+        detection_accuracy = left_index.visibility
 
-# Calculate the direction of the last n points
-def get_direction(player, n):
-    # Return 0, 0 if not enough points are available
-    if len(player.left_hand_track_points) < 2:
-        return 0, 0  # Return 0, 0 if not enough points are available
-    # Calculate the moving average of the last n points
-    current_avg = moving_average(player.left_hand_track_points, n)
-    # Calculate the moving average of the previous n points
-    prev_avg = moving_average(player.left_hand_track_points[:-1], n)
+        if detection_accuracy > min_detection_accuracy:
+            px_left, py_left = player.left_hand_track_previous_point
+            distance_left_hand = math.hypot(cx_left - px_left, cy_left - py_left)
 
-    # Calculate the direction
-    dx = current_avg[0] - prev_avg[0]
-    dy = current_avg[1] - prev_avg[1]
+            current_time = time.time()
+            player.left_hand_track_points.append(([cx_left, cy_left], current_time))
+            player.left_hand_track_lengths.append(distance_left_hand)
+            player.left_hand_track_current += distance_left_hand
+            player.left_hand_track_previous_point = cx_left, cy_left
 
-    #dx is the change in x direction and dy is the change in y direction
-    return dx, dy
+    def calculate_angle(self, first_point, mid_point, end_point):
+        first_point = np.array(first_point)
+        mid_point = np.array(mid_point)
+        end_point = np.array(end_point)
 
+        radians = np.arctan2(end_point[1] - mid_point[1], end_point[0] - mid_point[0]) - \
+                  np.arctan2(first_point[1] - mid_point[1], first_point[0] - mid_point[0])
+        angle = np.abs(radians * 180.0 / np.pi)
+        if angle > 180:
+            angle = 360 - angle
+        return angle
 
-def detect_punch(player, angle, stage, left_wrist_visibility, left_elbow_visibility):
-    dx, dy = get_direction(player, 5)  # Calculate the direction based on the last 5 points
+    def get_landmarks(self, results):
+        left_shoulder = results.pose_landmarks.landmark[self.mp_pose.PoseLandmark.LEFT_SHOULDER.value]
+        left_elbow = results.pose_landmarks.landmark[self.mp_pose.PoseLandmark.LEFT_ELBOW.value]
+        left_wrist = results.pose_landmarks.landmark[self.mp_pose.PoseLandmark.LEFT_WRIST.value]
 
-    # Detect jab
-    if angle > 120 and stage[
-        "jab"] == "reset" and left_wrist_visibility > min_visiblity and left_elbow_visibility > min_visiblity and abs(
-        dy) > abs(dx):
-        stage["jab"] = "stretched"
-    if angle < 20 and stage["jab"] == "stretched":
-        stage["jab"] = "reset"
-        player.score["jab"] += 1
+        left_shoulder_xy = [left_shoulder.x, left_shoulder.y]
+        left_elbow_xy = [left_elbow.x, left_elbow.y]
+        left_wrist_xy = [left_wrist.x, left_wrist.y]
 
-    # Detect hook
-    if 60 < angle < 130 and stage[
-        "hook"] == "reset" and left_wrist_visibility > min_visiblity and left_elbow_visibility > min_visiblity and abs(
-        dx) > abs(dy):
-        stage["hook"] = "hook angle"
-    if angle < 60 and stage["hook"] == "hook angle":
-        stage["hook"] = "reset"
-        player.score["hook"] += 1
+        return left_shoulder_xy, left_elbow_xy, left_wrist_xy, left_wrist.visibility, left_elbow.visibility
 
-        # Detect uppercut
-    if angle > 150 and stage[
-        "uppercut"] == "reset" and left_wrist_visibility > min_visiblity and left_elbow_visibility > min_visiblity and dy > abs(
-        dx):
-        stage["uppercut"] = "stretched"
-    if angle < 90 and stage["uppercut"] == "stretched":
-        stage["uppercut"] = "reset"
-        player.score["uppercut"] += 1
+    def detect_punch(self, player, angle, left_wrist_visibility, left_elbow_visibility):
+        dx, dy = self.get_direction(player=player, number_of_points_to_track=2)
 
-    return stage
+        if time.time() - self.last_punch_time >= self.cooldown_duration:
+            if left_wrist_visibility > self.min_visiblity and left_elbow_visibility > self.min_visiblity:
+                self.detect_jab(angle, dx, dy, player)
+                self.detect_uppercut(angle, dy, player)
+                self.detect_hook(angle, dx, dy, player)
 
+                self.last_punch_time = time.time()
 
-def calculate_angle(first_point, mid_point, end_point):
-    first_point = np.array(first_point)
-    mid_point = np.array(mid_point)
-    end_point = np.array(end_point)
+    def detect_uppercut(self, angle, dy, player):
+        if 30 < angle < 150 and dy < 0:
+            if self.uppercut_timer >= 0.5:
+                print("uppercut")
+                if self.selected_punch == "uppercut":
+                    player.points += 1
+                self.uppercut_timer = 0
+            else:
+                self.uppercut_timer += time.time() - self.uppercut_timer
+        else:
+            self.uppercut_timer = 0
 
-    radians = np.arctan2(end_point[1] - mid_point[1], end_point[0] - mid_point[0]) - \
-              np.arctan2(first_point[1] - mid_point[1], first_point[0] - mid_point[0])
-    angle = np.abs(radians * 180.0 / np.pi)
-    if angle > 180:
-        angle = 360 - angle
-    return angle
+    def detect_hook(self, angle, dx, dy, player):
+        if 60 < angle < 160 and abs(dx) ** 2 > abs(dy) ** 2:
+            if self.hook_timer >= 0.1:
+                if self.selected_punch == "hook":
+                    player.points += 1
+                self.hook_timer = 0
+            else:
+                self.hook_timer += time.time() - self.hook_timer
+        else:
+            self.hook_timer = 0
 
+    def detect_jab(self, angle, dx, dy, player):
+        if angle > 110 and abs(dy) ** 2 < abs(dx) ** 2:
+            print("jab")
+            if self.selected_punch == "jab":
+                player.points += 1
 
-def get_landmarks(results):
-    left_shoulder = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER.value]
-    left_elbow = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_ELBOW.value]
-    left_wrist = results.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_WRIST.value]
+    def draw_on_frame(self, image, angle, left_elbow_xy, results, player):
+        cv2.putText(image, str(angle), tuple(np.multiply(left_elbow_xy, [640, 480]).astype(int)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2, cv2.LINE_AA)
 
-    left_shoulder_xy = [left_shoulder.x, left_shoulder.y]
-    left_elbow_xy = [left_elbow.x, left_elbow.y]
-    left_wrist_xy = [left_wrist.x, left_wrist.y]
+        # put the selected_punch on the screen in the middle
+        cv2.putText(image, f"selected punch: {self.selected_punch}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
+                    (255, 255, 255), 2,
+                    cv2.LINE_AA)
 
-    return left_shoulder_xy, left_elbow_xy, left_wrist_xy, left_wrist.visibility, left_elbow.visibility
+        # Draw the landmarks on the image
+        self.mp_drawing.draw_landmarks(image, results.pose_landmarks, self.mp_pose.POSE_CONNECTIONS,
+                                       self.mp_drawing.DrawingSpec(color=(245, 117, 66), thickness=2, circle_radius=2),
+                                       self.mp_drawing.DrawingSpec(color=(245, 66, 230), thickness=2,
+                                                                   circle_radius=2), )
+        self.draw_snake_line(image=image, player=player, color=(0, 255, 0))
 
+        # draw the points on the screen
+        cv2.putText(image, f"points: {player.points}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2,
+                    cv2.LINE_AA)
+        # draw the time in the top right corner
+        cv2.putText(image, f"time: {91 - self.elapsed_time:.0f}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255),
+                    2,
+                    cv2.LINE_AA)
 
-def track_left_hand(player, landmarks, width, height):
-    min_detection_accuracy = 0.9
-    left_index = landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value]
-    cx_left, cy_left = int(left_index.x * width), int(left_index.y * height)
-    detection_accuracy = left_index.visibility
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        # Display the resulting image
+        cv2.imshow('Game', image)
 
-    if detection_accuracy > min_detection_accuracy:
-        px_left, py_left = player.left_hand_track_previous_point
-        distance_left_hand = math.hypot(cx_left - px_left, cy_left - py_left)
+    def create_players(self):
+        for i in range(self.number_of_players):
+            self.players.append(self.Player())
 
+    def draw_snake_line(self, image, player, color):
+        line_time = 3
         current_time = time.time()
-        player.left_hand_track_points.append(([cx_left, cy_left], current_time))
-        player.left_hand_track_lengths.append(distance_left_hand)
-        player.left_hand_track_current += distance_left_hand
-        player.left_hand_track_previous_point = cx_left, cy_left
+        player.left_hand_track_points = [(point, timestamp) for point, timestamp in player.left_hand_track_points if
+                                         current_time - timestamp <= line_time]
 
-def draw_on_frame(image, angle, left_elbow_xy, number_of_jabs, results, dx, dy):
-    cv2.putText(image, str(angle), tuple(np.multiply(left_elbow_xy, [640, 480]).astype(int)),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2, cv2.LINE_AA)
+        for i in range(1, len(player.left_hand_track_points)):
+            if player.left_hand_track_lengths[i - 1] != 0:
+                cv2.line(image, tuple(player.left_hand_track_points[i - 1][0]),
+                         tuple(player.left_hand_track_points[i][0]),
+                         color, 3)
 
-    # Display the jab counter on the image
-    cv2.putText(image, str(int(number_of_jabs)), (10, 70), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
-    cv2.putText(image, f"dx: {dx:.2f}, dy: {dy:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2,
-                cv2.LINE_AA)
-    # Convert the image back to BGR for display
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    def main_loop(self):
+        self.create_players()
 
-    # Draw the landmarks on the image
-    mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,
-                              mp_drawing.DrawingSpec(color=(245, 117, 66), thickness=2, circle_radius=2),
-                              mp_drawing.DrawingSpec(color=(245, 66, 230), thickness=2, circle_radius=2), )
+        start_time = time.time()
 
-    # Display the resulting image
-    cv2.imshow('Webcam', image)
+        while self.video_capture.isOpened():
+            ret, frame = self.video_capture.read()
 
+            if not ret:
+                break
 
-def create_players():
-    for i in range(number_of_players):
-        players.append(Player())
+            image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            landmarks = self.pose_model.process(image)
 
+            if landmarks.pose_landmarks is not None:
+                left_shoulder_xy, left_elbow_xy, left_wrist_xy, left_wrist_visibility, left_elbow_visibility = self.get_landmarks(
+                    landmarks)
 
-def draw_snake_line(image, player, color):
-    line_time = 3
-    current_time = time.time()
-    player.left_hand_track_points = [(point, timestamp) for point, timestamp in player.left_hand_track_points if
-                                     current_time - timestamp <= line_time]
+                width, height = image.shape[1], image.shape[0]
 
-    for i in range(1, len(player.left_hand_track_points)):
-        if player.left_hand_track_lengths[i - 1] != 0:
-            cv2.line(image, tuple(player.left_hand_track_points[i - 1][0]), tuple(player.left_hand_track_points[i][0]),
-                     color, 3)
+                self.track_left_hand(player=self.players[0], landmarks=landmarks.pose_landmarks.landmark,
+                                     width=width, height=height)
 
+                angle = self.calculate_angle(first_point=left_shoulder_xy, mid_point=left_elbow_xy,
+                                             end_point=left_wrist_xy)
 
-def main_loop():
-    global stage
+                self.detect_punch(player=self.players[0], angle=angle, left_wrist_visibility=left_wrist_visibility,
+                                  left_elbow_visibility=left_elbow_visibility)
 
-    create_players()
-    stage = {"jab": "reset", "hook": "reset", "uppercut": "reset"}
+                self.elapsed_time = time.time() - start_time
 
-    while video_capture.isOpened():
-        # Capture frame-by-frame
-        ret, frame = video_capture.read()
+                self.draw_on_frame(image=image, angle=angle, left_elbow_xy=left_elbow_xy, results=landmarks,
+                                   player=self.players[0])
 
-        if not ret:
-            break
+            if cv2.waitKey(1) & 0xFF == ord('q') or self.elapsed_time > 90:
+                break
 
-        # Convert the image to RGB
-        image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-        # Detect the landmarks
-        results = pose_model.process(image)
-
-        # Check if any landmarks were detected
-        if results.pose_landmarks is not None:
-            left_shoulder_xy, left_elbow_xy, left_wrist_xy, left_wrist_visibility, left_elbow_visibility = get_landmarks(
-                results)
-
-            # Calculate the angle between the shoulder, elbow and wrist
-            angle = calculate_angle(left_shoulder_xy, left_elbow_xy, left_wrist_xy)
-
-            for player in players:
-                track_left_hand(player, results.pose_landmarks.landmark, image.shape[1], image.shape[0])
-
-                # Update the stage and punch counters for each player
-                stage = detect_punch(player, angle, stage, left_wrist_visibility,
-                                     left_elbow_visibility)
-
-            # Draw on the frame
-            # In the main_loop function
-            wrist_dx, wrist_dy = get_direction(player, 5)
-            draw_on_frame(image, angle, left_elbow_xy, number_of_jabs, results, dx=wrist_dx, dy=wrist_dy)
-
-            draw_snake_line(image, player, (0, 255, 0))  # Use green color for the line
-
-            # Display the punch counters on the image for the first player
-            player = players[0]
-            cv2.putText(image, f"Jabs: {player.score['jab']}", (10, 70), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
-            cv2.putText(image, f"Hooks: {player.score['hook']}", (10, 120), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
-            cv2.putText(image, f"Uppercuts: {player.score['uppercut']}", (10, 170), cv2.FONT_HERSHEY_PLAIN, 3,
-                        (255, 0, 255), 3)
-
-            # Convert the image back to BGR for display
-            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-
-            # Display the resulting image
-            cv2.imshow('Webcam', image)
-
-        # Exit the loop if 'q' is pressed
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    # Release the video capture and destroy all windows
-    video_capture.release()
-    cv2.destroyAllWindows()
+        self.video_capture.release()
+        cv2.destroyAllWindows()
 
 
-if __name__ == '__main__':
-    main_loop()
+if __name__ == "__main__":
+    game = PunchGame()
+    game.main_loop()
