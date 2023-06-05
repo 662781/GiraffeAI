@@ -19,7 +19,7 @@ This project is a collection of four AI-related mini-games implemented in Python
 Clone the repository:
 
 ```bash
-git clone https://github.com/
+git clone https://github.com/662781/GiraffeAI
 ```
 
 
