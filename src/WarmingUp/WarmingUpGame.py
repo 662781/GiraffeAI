@@ -43,8 +43,8 @@ class WarmingUpGame(CVGame):
         self.pred_classes: list[int] = []
 
         # Check which exercise is chosen (Push-Up, Sit-Up, Jumping Jack, Squat)
-        self.exercise: str = "PushUp"
-        # exercise: str = GameMenu.chosen_exercise
+        # self.exercise: str = "PushUp"
+        self.exercise: str = GameMenu.get_exercise()
 
         # Time in seconds to compete for points in the chosen exercise game
         self.timer: int = 240
@@ -52,7 +52,7 @@ class WarmingUpGame(CVGame):
         # Set the default mode
         self.mode: int = 0
 
-        UIService.draw_player_amt_select()
+        # UIService.draw_player_amt_select()
     
     def update(self, frame):
         # Check for user input
