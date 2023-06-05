@@ -33,7 +33,7 @@ class WarmingUpGame(CVGame):
         #model.to('cuda')
 
         # The number of players chosen (should be chosen in the future game menu)
-        self.no_players_set: int = 1
+        self.no_players_set: int = 2
 
         # Create Player class instances with PlayerService
         self.pl_serv = PlayerService(self.no_players_set)
@@ -134,9 +134,9 @@ class WarmingUpGame(CVGame):
                     kp_serv.write_kp_data_to_csv(number, self.mode, player_proc_keypoints[0])
 
                 # Start keeping score of the chosen exercise for each player. Add the score to each players total.
-                # for i, player in enumerate(self.players_list):
-                #     if(player.does_exercise(self.exercise, self.pred_classes[i]) == True):
-                #         player.score += 1
+                for i, player in enumerate(self.players_list):
+                    if(player.does_exercise(self.exercise, self.pred_classes[i]) == True):
+                        player.score += 1
             else:
                 UIService.show_pause_menu()
 
