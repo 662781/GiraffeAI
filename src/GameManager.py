@@ -2,10 +2,10 @@ import cv2
 import time
 import numpy as np
 
-# from cvninja import CVNinjaGame
-# from fightsimulator import FightSimulatorGame
-# from RockPaperScissors import RockPaperScissorsGame
-# from RockPaperScissors import RockPaperScissorsAIGame
+from cvninja import CVNinjaGame
+from fightsimulator import FightSimulatorGame
+from RockPaperScissors import RockPaperScissorsGame
+from RockPaperScissors import RockPaperScissorsAIGame
 from WarmingUp import WarmingUpGame
 
 from shared.utils import Generics, CVAssets
@@ -38,13 +38,13 @@ class GameManager:
     enough_time_passed = False
     games = {
         # Put your menus on the same line as your game, for clarity 
-        # "Main Menu": CVMainMenu(),
+        "Main Menu": CVMainMenu(),
 
-        # "CVNinja": CVNinjaGame(), "CVNinja Menu": CVNinjaMenu(),
+        "CVNinja": CVNinjaGame(), "CVNinja Menu": CVNinjaMenu(),
 
-        # "Fight Simulator": FightSimulatorGame(),
+        "Fight Simulator": FightSimulatorGame(),
 
-        # "Rock Paper Scissors": RockPaperScissorsGame(), "Rock Paper Scissors AI": RockPaperScissorsAIGame(), "Rock Paper Scissors Menu": RockPaperScissorsMenu(),
+        "Rock Paper Scissors": RockPaperScissorsGame(), "Rock Paper Scissors AI": RockPaperScissorsAIGame(), "Rock Paper Scissors Menu": RockPaperScissorsMenu(),
 
 
         "Warming Up": WarmingUpGame(), "Warming Up Menu": WarmingUpMenu()
@@ -52,7 +52,7 @@ class GameManager:
 
     def __init__(self):
         self.current_game = None
-        self.cap = cv2.VideoCapture(1)
+        self.cap = cv2.VideoCapture(0)
         self.loading_image = cv2.imread(CVAssets.IMAGE_LOADING, cv2.IMREAD_UNCHANGED)
 
         camera_width = 640
@@ -124,5 +124,5 @@ class GameManager:
 
 
 game_manager = GameManager()
-game_manager.switch_game("Main Menu")
+game_manager.switch_game("Fight Simulator")
 game_manager.run()
