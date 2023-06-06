@@ -346,7 +346,7 @@ class FightSimulatorGame(CVGame):
             dy (float): Vertical direction value.
             player (FightSimulatorGame.Player): Player object.
         """
-        if 30 < angle < 150 and dy < 0:
+        if 20 < angle < 160 and dy < 0:
             if self.uppercut_timer >= 0.5:
                 print("uppercut")
                 if self.selected_punch == "uppercut":
@@ -368,7 +368,7 @@ class FightSimulatorGame(CVGame):
             dy (float): Vertical direction value.
             player (FightSimulatorGame.Player): Player object.
         """
-        if 60 < angle < 160 and abs(dx) ** 2 > abs(dy) ** 2:
+        if 40 < angle < 170 and (abs(dx) ** 2) > (abs(dy) ** 2):
             if self.hook_timer >= 0.1:
                 if self.selected_punch == "hook":
                     player.points += 1
@@ -389,7 +389,7 @@ class FightSimulatorGame(CVGame):
             dy (float): Vertical direction value.
             player (FightSimulatorGame.Player): Player object.
         """
-        if angle > 110 and abs(dy) ** 2 < abs(dx) ** 2:
+        if angle > 100 and (abs(dy) ** 2) < (abs(dx) ** 2):
             print("jab")
             if self.selected_punch == "jab":
                 player.points += 1
