@@ -43,7 +43,7 @@ Before running the games in this collection, ensure that you have the following:
    - Camera placement: Position the camera directly in front of you, facing the game area. Avoid placing the camera too far away to ensure effective fruit detection and slicing.
 
 4. Warmup Game with Push-Up Counter:
-   - Idk yet
+   - No specific requirements.
 
 Note: These requirements are general guidelines to achieve the best experience while playing the games. Adjustments may be needed based on your specific setup and environment.
 
