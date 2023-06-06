@@ -26,15 +26,17 @@ class RockPaperScissorsGame(CVGame):
         #self.options = options
     
     def update(self, frame):
+        display_fps = self.cvFpsCalc.get()
         # Split the frame in two
         height, width = frame.shape[:2]
         half_width = int(width/2)
+        frame = cv2.flip(frame, 1)
 
         left_frame = frame[:, :half_width]
         right_frame = frame[:, half_width:]
 
-        handLeft, frame = self.detectorLeft.findHands(left_frame)  # with draw
-        handRight, frame = self.detectorRight.findHands(right_frame)  # with draw
+        handLeft = self.detectorLeft.findHands(left_frame, draw=False)  # with draw
+        handRight = self.detectorRight.findHands(right_frame, draw=False)  # with draw
 
 
 
@@ -42,6 +44,15 @@ class RockPaperScissorsGame(CVGame):
         if key == ord('q'):
             self.should_switch = True
             self.next_game = "Main Menu"
+
+        if handLeft:
+            handLeftText = game_utils.mirror_hands(handLeft)
+        else:
+            handLeftText = "None"
+        if handRight:
+            handRightText = game_utils.mirror_hands(handRight)
+        else:
+            handRightText = "None"
 
         if handLeft and handRight:
             fingersLeft = self.detectorLeft.fingersUp(handLeft[0])
@@ -56,7 +67,7 @@ class RockPaperScissorsGame(CVGame):
             if self.stateResult is False:
                 self.timer = time.time() - self.initialTime
 
-                if self.timer > 3:
+                if self.timer > 1:
                     self.stateResult = True
                     self.timer = 0
 
@@ -68,7 +79,7 @@ class RockPaperScissorsGame(CVGame):
 
                     else:
                         print("One or both hands were not detected!")
-        return game_utils.draw_ui_against_players(self.scores, left_frame, right_frame, half_width, height) 
+        return game_utils.draw_ui_against_players(self.scores, left_frame, right_frame, half_width, height, handLeftText, handRightText, display_fps)
 
     def cleanup(self):
         super().cleanup()

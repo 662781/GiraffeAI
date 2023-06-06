@@ -26,14 +26,18 @@ class RockPaperScissorsAIGame(CVGame):
         self.active_player = None
     
     def update(self, frame):
+        display_fps = self.cvFpsCalc.get()
         # Split the frame in two
         height, width = frame.shape[:2]
         half_width = int(width/2)
+        frame = cv2.flip(frame, 1)
+
 
         left_frame = frame[:, :half_width]
         right_frame = frame[:, half_width:]
 
-        handLeft, frame = self.detectorLeft.findHands(right_frame)  # with draw
+        handLeft = self.detectorLeft.findHands(right_frame, draw=False)  # with draw
+
 
 
 
@@ -60,17 +64,21 @@ class RockPaperScissorsAIGame(CVGame):
 
         if handLeft:
             fingersLeft = self.detectorLeft.fingersUp(handLeft[0])
+            handText = game_utils.mirror_hands(handLeft)
             if fingersLeft == [1, 0, 0, 0, 0]:
                 self.startGame = True
                 self.initialTime = time.time()
                 self.stateResult = False
+        else:
+            handText = "None"
+
 
         if self.startGame:
 
             if self.stateResult is False:
                 self.timer = time.time() - self.initialTime
                 self.AIMove = 0
-                if self.timer > 3:
+                if self.timer > 1:
                     self.stateResult = True
                     self.timer = 0
 
@@ -86,7 +94,7 @@ class RockPaperScissorsAIGame(CVGame):
                     else:
                         print("hand not detected!")
 
-        return game_utils.draw_ui_against_AI(self.player1, self.player2, self.scores, self.AIMove, left_frame, right_frame, half_width, height)  
+        return game_utils.draw_ui_against_AI(self.player1, self.player2, self.scores, self.AIMove, left_frame, right_frame, half_width, height, handText, display_fps)
 
     def cleanup(self):
         super().cleanup()

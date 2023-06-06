@@ -166,28 +166,30 @@ def calculate_result_against_AI(playerLeftMove, randomNumber, scores, winStreak)
 # It overlays the AI move image on the left frame and combines it with the right frame.
 # It displays player names, scores, and a dividing line on the combined frame.
 # The resulting frame is returned.
-def draw_ui_against_AI(player1, player2, scores, randomNumber, left_frame, right_frame, half_width, height):
+def draw_ui_against_AI(player1, player2, scores, randomNumber, left_frame, right_frame, half_width, height, handText, display_fps):
     imgAI = cv2.imread(f'RockPaperScissors/assets/{randomNumber}.png', cv2.IMREAD_UNCHANGED)
-    imgAI = cv2.flip(imgAI,1)
     x_offset = int((right_frame.shape[1] - imgAI.shape[1]) / 2)
     y_offset = int((right_frame.shape[0] - imgAI.shape[0]) / 2)
     left_frame = overlayPNG(left_frame, imgAI, [x_offset, y_offset])
+
     # Concatenate the left and right frames horizontally
     combined_frame = cv2.hconcat([left_frame, right_frame])
 
-    # Flip the resulting image horizontally
-    combined_frame = cv2.flip(combined_frame, 1)
+    # Display FPS
+    # cv2.putText(combined_frame, "FPS:" + str(display_fps), (460, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2,cv2.LINE_AA)
 
     # Display player names on the frames
     #image, text, position, font_path, font_size, font_color, outline_color = (255, 255, 255), outline_width=2)
-    combined_frame = Generics.put_text_with_custom_font(combined_frame, player1, (10,50), CVAssets.FONT_FRUIT_NINJA, 20 ,(255, 255, 255), outline_color=(0,0,0))
-    combined_frame = Generics.put_text_with_custom_font(combined_frame, player2, (half_width+10, 50),CVAssets.FONT_FRUIT_NINJA, 20 , (255, 255, 255), outline_color=(0,0,0))
-    combined_frame = Generics.put_text_with_custom_font(combined_frame, "Points: " + str(scores[1]), (10,100), CVAssets.FONT_FRUIT_NINJA, 20 ,(255, 255, 255), outline_color=(0,0,0))
-    combined_frame = Generics.put_text_with_custom_font(combined_frame, "Points: " + str(scores[0]), (half_width+10, 100), CVAssets.FONT_FRUIT_NINJA, 20 ,(255, 255, 255), outline_color=(0,0,0))
-    # cv2.putText(combined_frame, player1, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
-    # cv2.putText(combined_frame, player2, (half_width+10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
-    # cv2.putText(combined_frame, "Points: " + str(scores[1]), (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
-    # cv2.putText(combined_frame, "Points: " + str(scores[0]), (half_width+10, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+    combined_frame = Generics.put_text_with_custom_font(combined_frame, player2, (10,50), CVAssets.FONT_FRUIT_NINJA, 20 ,(255, 255, 255), outline_color=(0,0,0))
+    combined_frame = Generics.put_text_with_custom_font(combined_frame, player1, (half_width+10, 50),CVAssets.FONT_FRUIT_NINJA, 20 , (255, 255, 255), outline_color=(0,0,0))
+    combined_frame = Generics.put_text_with_custom_font(combined_frame, "Points: " + str(scores[0]), (10,100), CVAssets.FONT_FRUIT_NINJA, 20 ,(255, 255, 255), outline_color=(0,0,0))
+    combined_frame = Generics.put_text_with_custom_font(combined_frame, "Points: " + str(scores[1]), (half_width+10, 100), CVAssets.FONT_FRUIT_NINJA, 20 ,(255, 255, 255), outline_color=(0,0,0))
+
+    # Display detected hand
+    if handText == "None":
+        combined_frame = Generics.put_text_with_custom_font(combined_frame, "Hand: " + handText,(half_width + 150, 100), CVAssets.FONT_FRUIT_NINJA, 20,(0, 0, 255), outline_color=(0, 0, 0))
+    else:
+        combined_frame = Generics.put_text_with_custom_font(combined_frame, "Hand: " + handText,(half_width + 150, 100), CVAssets.FONT_FRUIT_NINJA, 20,(0, 255, 0), outline_color=(0, 0, 0))
 
     cv2.line(combined_frame, (half_width, 0), (half_width, height), (255,255,255), 1)
 
@@ -256,16 +258,29 @@ def get_players_move(handLeft, detectorLeft, player1, handRight, detectorRight, 
 #This function draws the UI for the game between two players.
 # It combines the left and right frames, displays the scores, and adds a dividing line.
 # The resulting combined frame is returned.
-def draw_ui_against_players(scores, left_frame, right_frame, half_width, height):
+def draw_ui_against_players(scores, left_frame, right_frame, half_width, height, handLeftText, handRightText, display_fps):
     # Concatenate the left and right frames horizontally
     combined_frame = cv2.hconcat([left_frame, right_frame])
 
-    # Flip the resulting image horizontally
-    combined_frame = cv2.flip(combined_frame, 1)
+    # Display FPS
+    #cv2.putText(combined_frame, "FPS:" + str(display_fps), (460, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2,cv2.LINE_AA)
 
     # Display player names on the frames
-    cv2.putText(combined_frame, "Points: " + str(scores[0]), (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
-    cv2.putText(combined_frame, "Points: " + str(scores[1]), (half_width+10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+    combined_frame = Generics.put_text_with_custom_font(combined_frame, "Points: " + str(scores[1]), (10, 50),CVAssets.FONT_FRUIT_NINJA, 20, (255, 255, 255),outline_color=(0, 0, 0))
+    combined_frame = Generics.put_text_with_custom_font(combined_frame, "Points: " + str(scores[0]),(half_width + 10, 50), CVAssets.FONT_FRUIT_NINJA, 20,(255, 255, 255), outline_color=(0, 0, 0))
+
+    # Display detected hands
+    if handLeftText == "None":
+        combined_frame = Generics.put_text_with_custom_font(combined_frame, "Hand: " + handLeftText,(150, 50), CVAssets.FONT_FRUIT_NINJA, 20,(0, 0, 255), outline_color=(0, 0, 0))
+    else:
+        combined_frame = Generics.put_text_with_custom_font(combined_frame, "Hand: " + handLeftText,(150, 50), CVAssets.FONT_FRUIT_NINJA, 20,(0, 255, 0), outline_color=(0, 0, 0))
+    if handRightText == "None":
+        combined_frame = Generics.put_text_with_custom_font(combined_frame, "Hand: " + handRightText,(half_width + 150, 50), CVAssets.FONT_FRUIT_NINJA, 20,(0, 0, 255), outline_color=(0, 0, 0))
+    else:
+        combined_frame = Generics.put_text_with_custom_font(combined_frame, "Hand: " + handRightText,(half_width + 150, 50), CVAssets.FONT_FRUIT_NINJA, 20,(0, 255, 0), outline_color=(0, 0, 0))
+
+
+
 
     cv2.line(combined_frame, (half_width, 0), (half_width, height), (255,255,255), 1)
 
@@ -280,17 +295,29 @@ def calculate_results_against_players(playerLeftMove, playerRightMove, scores, p
             (playerLeftMove == 2 and playerRightMove == 1) or \
             (playerLeftMove == 3 and playerRightMove == 2):
         scores[1] += 1
-        print(f"Player '{player2}' Wins, Score = ", scores[1])
+        print(f"Player '{player1}' Wins, Score = ", scores[1])
 
     # Player Left Wins
     elif (playerLeftMove == 3 and playerRightMove == 1) or \
             (playerLeftMove == 1 and playerRightMove == 2) or \
             (playerLeftMove == 2 and playerRightMove == 3):
         scores[0] += 1
-        print(f"Player '{player1}' Wins, Score = ", scores[0])
+        print(f"Player '{player2}' Wins, Score = ", scores[0])
     else:
         print("Bust, try again..")
 
     return scores
 
 #------------------------------------------------------------------------ Used in both
+
+
+
+def mirror_hands(hand):
+    if str(hand[0]['type']) == "Left":
+        handtext = "Right"
+    elif str(hand[0]['type']) == "Right":
+        handtext = "Left"
+    else:
+        handtext = "None"
+
+    return handtext
