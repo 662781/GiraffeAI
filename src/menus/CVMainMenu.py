@@ -115,25 +115,23 @@ class CVMainMenu(CVGame):
         # Get objects that were involved in collision
         kinematic_shape = arbiter.shapes[0]
         shape_trail_length = data["player"].get_trailing_length_by_limb(kinematic_shape.player_limb)
-
-        print("Hit with ", kinematic_shape.player_limb)
-        for shape in arbiter.shapes:
-            if(shape.body.body_type != pymunk.Body.KINEMATIC):
-                if(shape_trail_length > 10 and self.is_in_the_middle(self.keypoints)): 
-                    shape.parent_object.collision_aftermath(space, shape)
-                    self.should_switch = True
-
-                    # DON'T HAVE A MENU FOR YOUR GAME? SET YOUR OPTIONS IN THE CORRECT IF STATEMENT: self.next_game_options["OPTION"] = "something"
-                    if(shape.collision_type == 1):
-                        self.next_game = "Warming-up"
-                    elif(shape.collision_type == 2):
-                        self.next_game = "CVNinja Menu"
-                    elif(shape.collision_type == 4):
-                        self.next_game = "Fight Simulator"
-                    elif(shape.collision_type == 5):
-                        self.next_game = "Rock Paper Scissors Menu"
-                    else:
-                        self.next_game = None
+        shape = next((obj for obj in arbiter.shapes if obj.body.body_type != pymunk.Body.KINEMATIC), None)
+          
+          # Check if you did an actual movement and not just small shifts
+        if(shape_trail_length > 20 and shape.parent_object.collision_requirements_are_met(data["player"], kinematic_shape)): 
+            shape.parent_object.collision_aftermath(space, shape)
+            self.should_switch = True
+            # DON'T HAVE A MENU FOR YOUR GAME? SET YOUR OPTIONS IN THE CORRECT IF STATEMENT: self.next_game_options["OPTION"] = "something"
+            if(shape.collision_type == 1):
+                self.next_game = "Warming-up"
+            elif(shape.collision_type == 2):
+                self.next_game = "CVNinja Menu"
+            elif(shape.collision_type == 4):
+                self.next_game = "Fight Simulator"
+            elif(shape.collision_type == 5):
+                self.next_game = "Rock Paper Scissors Menu"
+            else:
+                self.next_game = None
         return True
     
     def is_in_the_middle(self,keypoints):
