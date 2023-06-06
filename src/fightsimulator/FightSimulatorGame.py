@@ -56,7 +56,7 @@ class FightSimulatorGame(CVGame):
         self.combined_points = 0
         self.previous_combined_points = -1
         self.is_game_started = False
-        self.game_duration = 90
+        self.game_duration = 5
 
     def setup(self, options):
         """
@@ -150,7 +150,7 @@ class FightSimulatorGame(CVGame):
         """
         Check for the end of the game.
         """
-        if cv2.waitKey(1) & 0xFF == ord('q') or self.elapsed_time > 95:
+        if cv2.waitKey(1) & 0xFF == ord('q') or self.elapsed_time > self.game_duration:
             self.should_switch = True
             self.next_game = None
 
