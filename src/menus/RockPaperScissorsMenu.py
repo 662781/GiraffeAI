@@ -20,7 +20,6 @@ class RockPaperScissorsMenu(CVGame):
         self.versus_image_ai = cv2.imread(CVAssets.IMAGE_MENU_OPTION_AI, cv2.IMREAD_UNCHANGED) 
         self.versus_image_player = cv2.imread(CVAssets.IMAGE_MENU_OPTION_PLAYER, cv2.IMREAD_UNCHANGED)
         self.back_button = cv2.imread(CVAssets.IMAGE_MENU_BACK_BUTTON, cv2.IMREAD_UNCHANGED)
-        
 
         self.game_options = []
         self.yolo_model = YOLO(CVAssets.YOLO_MODEL_L)  # load an official model
@@ -38,7 +37,7 @@ class RockPaperScissorsMenu(CVGame):
 
         self.option_versus_player.spawn_object(self.space, 1, position=(420,250))
         self.option_versus_ai.spawn_object(self.space, 2, position=(420,50))
-        self.option_back_button.spawn_object(self.space, 99, position=(30,350))
+        self.option_back_button.spawn_object(self.space, 99, position=(30,380))
 
 
         self.game_options.extend([self.option_versus_player, self.option_versus_ai, self.option_back_button])
@@ -74,8 +73,10 @@ class RockPaperScissorsMenu(CVGame):
         self.space.step(1/60)
         image = Generics.overlayPNG(image, self.background, pos=[0, 0])
         image = Generics.put_text_with_custom_font(image, "Rock Paper Scissors",(25, 10), CVAssets.FONT_FRUIT_NINJA, 25, (255,255,255) ,(0, 0, 0))
-
-
+        image = Generics.put_text_with_custom_font(image,"INSTRUCTIONS",(20, 145), CVAssets.FONT_FRUIT_NINJA, 18, (255, 255, 255), (0, 0, 0))
+        image = Generics.put_text_with_custom_font(image,
+                                                   "Ready to face your\nopponent?\nDo a thumbs-up followed\nby your move.\n\nWant to go back to the\nmain menu?\nPress ‘ Q ’\n\n                V.S. A.I\nPress ‘ 1 ’ to change your\nname, when finished\ntyping press ‘ Enter ’",
+                                                   (20, 175), CVAssets.FONT_CALIBRI, 12, (255, 255, 255), (0, 0, 0), outline_width=0)
 
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         try:

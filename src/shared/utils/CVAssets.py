@@ -4,6 +4,7 @@ class CVAssets():
 
     # Font
     FONT_FRUIT_NINJA = "shared/assets/go3v2.ttf"
+    FONT_CALIBRI = "shared/assets/Calibri.ttf"
 
     # Menu assets
     IMAGE_MENU_BACK_BUTTON = "menus/assets/Menu-Back-Button.png"
