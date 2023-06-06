@@ -179,10 +179,10 @@ class Generics():
         #vertices = [(v+pymunk_object.body.position) for v in pymunk_object.get_vertices()]
         #vertices = np.array(vertices, dtype=np.int32)
         #cv2.fillPoly(background, [vertices], (255, 255, 255))
-        if(pymunk_object.collision_type == 4):
-            vertices = [(v+pymunk_object.body.position) for v in pymunk_object.get_vertices()]
-            vertices = np.array(vertices, dtype=np.int32)
-            cv2.fillPoly(background, [vertices], (255, 255, 255))
+        # if(pymunk_object.collision_type == 4):
+        #     vertices = [(v+pymunk_object.body.position) for v in pymunk_object.get_vertices()]
+        #     vertices = np.array(vertices, dtype=np.int32)
+        #     cv2.fillPoly(background, [vertices], (255, 255, 255))
         pos = pymunk_object.body.position
         x, y = int(pos.x), int(pos.y)
         background = Generics.overlayPNG(background, pymunk_object.image, [x, y])
