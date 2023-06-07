@@ -1,4 +1,4 @@
-from src.shared.utils import CvFpsCalc
+from shared.utils import CvFpsCalc
 
 class CVGame:
     """An abstract class used as the base for all games and menus.  
