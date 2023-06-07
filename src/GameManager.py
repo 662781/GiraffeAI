@@ -123,5 +123,5 @@ class GameManager:
 
 
 game_manager = GameManager()
-game_manager.switch_game("Main Menu")
+game_manager.switch_game("Rock Paper Scissors AI")
 game_manager.run()

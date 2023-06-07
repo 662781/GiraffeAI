@@ -5,8 +5,8 @@ import numpy as np
 import math
 import random
 
-from src.shared.model import CVGame
-from src.shared.utils import Generics, CVAssets
+from shared.model import CVGame
+from shared.utils import Generics, CVAssets
 
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
