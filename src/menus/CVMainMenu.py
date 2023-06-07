@@ -118,7 +118,7 @@ class CVMainMenu(CVGame):
         shape = next((obj for obj in arbiter.shapes if obj.body.body_type != pymunk.Body.KINEMATIC), None)
           
           # Check if you did an actual movement and not just small shifts
-        if(shape_trail_length > 20 and shape.parent_object.collision_requirements_are_met(data["player"], kinematic_shape)): 
+        if(self._is_in_the_middle(self.keypoints) and shape_trail_length > 20 and shape.parent_object.collision_requirements_are_met(data["player"], kinematic_shape)): 
             shape.parent_object.collision_aftermath(space, shape)
             self.should_switch = True
             # DON'T HAVE A MENU FOR YOUR GAME? SET YOUR OPTIONS IN THE CORRECT IF STATEMENT: self.next_game_options["OPTION"] = "something"
@@ -134,7 +134,7 @@ class CVMainMenu(CVGame):
                 self.next_game = None
         return True
     
-    def is_in_the_middle(self,keypoints):
+    def _is_in_the_middle(self,keypoints):
         head = (int(keypoints[0][0]), int(keypoints[0][1]))
         x = head[0] 
         x_start = 0

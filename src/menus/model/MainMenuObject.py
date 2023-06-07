@@ -31,14 +31,14 @@ class MainMenuObject(CVNinjaObject):
         shape.image = self.image
         self.pymunk_objects_to_draw.append(shape)
 
-    def collision_aftermath(self, space, shape, contact_point = (0,0)):
+    def collision_aftermath(self, space, shape, contact_point = (0,0), sound = CVAssets.AUDIO_ROCK_SMASH):
         # remove the collided "whole" object from draw list
         try:
             self.pymunk_objects_to_draw.remove(shape) 
         except:
-            raise RuntimeError("Object was already removed, possibly due to double collision.")
+            print("Object was already removed, possibly due to double collision.")
 
-        playsound(CVAssets.AUDIO_ROCK_SMASH, block=False)
+        playsound(sound, block=False)
 
         space.remove(shape, shape.body)
         broken_pymunk_objects = []
