@@ -24,6 +24,8 @@ class RockPaperScissorsAIGame(CVGame):
         self.player1 = "Change Name"
         self.player2 =  "AI" # Default names
         self.active_player = None
+        self.winner = 4
+        self.new_round = False
     
     def update(self, frame):
         display_fps = self.cvFpsCalc.get()
@@ -69,6 +71,8 @@ class RockPaperScissorsAIGame(CVGame):
                 self.startGame = True
                 self.initialTime = time.time()
                 self.stateResult = False
+                self.winner = 4
+                self.new_round = False
         else:
             handText = "None"
 
@@ -88,13 +92,13 @@ class RockPaperScissorsAIGame(CVGame):
                         # Get AI move
                         self.AIMove, predicted_move = game_utils.get_ai_move(self.player1)
 
-                        result, self.scores, self.winStreak = game_utils.calculate_result_against_AI(playerLeftMove, self.AIMove, self.scores, self.winStreak)
+                        self.scores, self.winStreak, self.winner, self.new_round = game_utils.calculate_result_against_AI(playerLeftMove, self.AIMove, self.scores, self.winStreak)
                         game_utils.save_to_csv(self.player1, playerLeftMove, self.winStreak[1], predicted_move, self.AIMove)
 
                     else:
                         print("hand not detected!")
 
-        return game_utils.draw_ui_against_AI(self.player1, self.player2, self.scores, self.AIMove, left_frame, right_frame, half_width, height, handText, display_fps)
-
+        return game_utils.draw_ui_against_AI(self.player1, self.player2, self.scores, self.AIMove, left_frame, right_frame, half_width, height, handText, display_fps, self.winner, self.new_round)
+        self.new_round = False
     def cleanup(self):
         super().cleanup()

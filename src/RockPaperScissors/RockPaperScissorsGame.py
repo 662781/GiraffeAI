@@ -22,6 +22,8 @@ class RockPaperScissorsGame(CVGame):
         self.player1 = "Player 1"
         self.player2 = "Player 2" # Default names
         self.active_player = None
+        self.winner = 4
+        self.new_round = False
 
         #self.options = options
     
@@ -61,6 +63,8 @@ class RockPaperScissorsGame(CVGame):
                 self.startGame = True
                 self.initialTime = time.time()
                 self.stateResult = False
+                self.winner = 4
+                self.new_round = False
 
         if self.startGame:
 
@@ -75,11 +79,10 @@ class RockPaperScissorsGame(CVGame):
 
                         # Get player move
                         playerLeftMove, playerLeftMoveName, playerRightMove, playerRightMoveName = game_utils.get_players_move(handLeft, self.detectorLeft, self.player1, handRight, self.detectorRight, self.player2)
-                        self.scores = game_utils.calculate_results_against_players(playerLeftMove, playerRightMove, self.scores, self.player2, self.player1)
-
+                        self.scores, self.winner, self.new_round = game_utils.calculate_results_against_players(playerLeftMove, playerRightMove, self.scores, self.player2, self.player1)
                     else:
                         print("One or both hands were not detected!")
-        return game_utils.draw_ui_against_players(self.scores, left_frame, right_frame, half_width, height, handLeftText, handRightText, display_fps)
-
+        return game_utils.draw_ui_against_players(self.scores, left_frame, right_frame, half_width, height, handLeftText, handRightText, display_fps, self.winner, self.new_round)
+        self.new_round = False
     def cleanup(self):
         super().cleanup()
