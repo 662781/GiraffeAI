@@ -9,6 +9,7 @@ from shared.model import CVNinjaPlayer
 from shared.model import YOLO
 import traceback
 from PIL import Image, ImageDraw, ImageFont
+from preferredsoundplayer import *
 
 
 
@@ -74,10 +75,9 @@ class CVNinjaMenu(CVGame):
         handler.data["player"] = self.player # Collision needs the player to determine extra conditions (long enough slice, used 2 hands, etc.)
         handler.begin = self.process_hit
 
-
+        self.theme_audio = soundplay(CVAssets.AUDIO_FRUIT_NINJA_THEME)
         
     def update(self, image):
-
         height, width, _ = image.shape
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image = cv2.flip(image, 1)
@@ -113,6 +113,7 @@ class CVNinjaMenu(CVGame):
         return image
 
     def cleanup(self):
+        stopsound(self.theme_audio)
         self.game_options = []
         for shape in self.space.shapes:
             self.space.remove(shape)
@@ -144,7 +145,7 @@ class CVNinjaMenu(CVGame):
         print("Hit with ", kinematic_shape.player_limb)
         shape = next((obj for obj in arbiter.shapes if obj.body.body_type != pymunk.Body.KINEMATIC), None)
         if(shape_trail_length > 5): 
-            shape.parent_object.collision_aftermath(space, shape)
+            shape.parent_object.collision_aftermath(space, shape, sound = CVAssets.AUDIO_PLANK_CUT)
             if(shape.collision_type == 6): # 
                 self.options_next_game["NUMBER_OF_PLAYERS"] = 2
                 self.option_arrow_key_down.spawn_object(space, 7, position=(180,300))

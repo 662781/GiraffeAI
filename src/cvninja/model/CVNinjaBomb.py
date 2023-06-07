@@ -1,6 +1,6 @@
 from shared.utils import Generics, CVAssets
 from shared.model import CVNinjaObject
-from playsound import playsound
+from preferredsoundplayer import playsound
 import numpy as np
 import pymunk
 import random

@@ -9,7 +9,7 @@ from menus.model import MainMenuObject
 import pymunk
 import threading
 import time
-from playsound import playsound
+from preferredsoundplayer import playsound
 import pandas as pd
 
 
@@ -33,7 +33,7 @@ class CVNinjaGame(CVGame):
           # todo: multiplayer will need different spawn locations for each player
           self.spawn_postitions_singleplayer=  [(-70, 50),(-70, 40),(-70, 30),# left corner
                                    (710, 50), (710, 40), (710, 30), # right corner
-                                   (100,-50), (300,-50), (400,-50), (600,-50)] # middle top
+                                   (100,-50), (300,-50), (400,-50), (490,-50)] # middle top
 
           self.spawn_postitions_multiplayer = [
                                              [(-70, 50),(-70, 30),(100,-50), (200,-50)],
@@ -43,17 +43,14 @@ class CVNinjaGame(CVGame):
      def setup(self, options):
           time.sleep(3)
           self.options = options
-          self.object_spawner_rotation = []
-          #self.options["NUMBER_OF_PLAYERS"] = 2 # todo, dynamic
-          self.game_duration = 20 # Seconds for multiplayer 
-          self.start_time = time.time()
           self.NUMBER_OF_PLAYERS = self.options["NUMBER_OF_PLAYERS"]
           self.CAMERA_WIDTH = self.options["CAMERA_WIDTH"]
           self.CAMERA_HEIGHT = self.options["CAMERA_HEIGHT"]
           self.background = cv2.resize(self.background, (self.CAMERA_WIDTH, self.CAMERA_HEIGHT))
-          self.cvninja_object_spawners ={} # Each player gets a list of object spawners assigned to him 
-          # Setup 
           self.region_width = self.CAMERA_WIDTH // self.NUMBER_OF_PLAYERS
+          self.object_spawner_rotation = []
+          self.cvninja_object_spawners ={} # Each player gets a list of object spawners assigned to them 
+          self.game_duration = 90 # Seconds of play time for multiplayer 
           self.menu_options = [MainMenuObject(self.image_play_again, 100), MainMenuObject(self.image_main_menu, 100)]
 
           self.players = []
@@ -69,15 +66,16 @@ class CVNinjaGame(CVGame):
           self._setup_space()
           self._create_players()
           self._startup_object_spawners()
+          self.start_time = time.time()
 
      def _startup_object_spawners(self):
           threads = []
           if(self.NUMBER_OF_PLAYERS == 1):
                threads.append(threading.Thread(
                                    target=lambda: self._handle_spawns_singleplayer(
-                                        self.players[0],
-                                        self.cvninja_object_spawners["Player-1"], 
-                                        self.spawn_postitions_singleplayer
+                                             self.players[0],
+                                             self.cvninja_object_spawners["Player-1"], 
+                                             self.spawn_postitions_singleplayer
                                              )
                                         )
                                    )
@@ -356,7 +354,7 @@ class CVNinjaGame(CVGame):
                          position = random_spawn
                     )
                     self.bomb_tutorial_done = True
-               time.sleep(3.5)
+               time.sleep(3)
 
      def _handle_spawns_multiplayer(self, player, object_spawners, spawn_postitions):
           """Handle spawning mechanics for multiplayer scenario"""
@@ -383,7 +381,7 @@ class CVNinjaGame(CVGame):
                          pass
                     random_spawn = spawn_postitions[random.randint(0,len(spawn_postitions)-1)]
                     time.sleep(1.5)
-               time.sleep(2)
+               time.sleep(2.5)
 
 
      def _cleanup_object_spawners(self):
