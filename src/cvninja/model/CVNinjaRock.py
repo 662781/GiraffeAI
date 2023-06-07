@@ -1,6 +1,6 @@
 from shared.utils import Generics, CVAssets
 from shared.model import CVNinjaObject
-from playsound import playsound
+from preferredsoundplayer import playsound
 
 import numpy as np
 import pymunk
@@ -19,11 +19,7 @@ class CVNinjaRock(CVNinjaObject):
     def collision_requirements_are_met(self, player = None, collided_shape = None):
         if(collided_shape.player_limb == "left hand" or collided_shape.player_limb == "right hand"):
             # x of the latest coords should be relatively near each other, the better YOLO model, the more accurate this is. 
-            if (abs(player.right_hand_track_points[0][0] - player.left_hand_track_points[0][0]) <= 60):
-                # todo, player.addscore
-                print("2 Hand HITTO")
-                return True
-            return False
+            return (abs(player.right_hand_track_points[0][0] - player.left_hand_track_points[0][0]) <= 60)
         else:
             # Else it is done with a foot, which is always allowed
             return True

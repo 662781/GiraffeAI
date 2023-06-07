@@ -19,6 +19,7 @@ class CVNinjaPlayer:
         self.score = 0
         self.strikes = 0 # Ammount of strikes, at 3 it's game over.
         self.collision_type = collision_type
+        self.status = "" # used to determine winner or loser for fruitninja
 
         self._setup_shapes(collision_type)
         
@@ -41,6 +42,11 @@ class CVNinjaPlayer:
         self.left_foot_track_lengths = []
         self.left_foot_track_current = 0
         self.left_foot_track_previous_point = 0,0
+
+        self.distance_right_foot = 0
+        self.distance_left_foot = 0
+        self.distance_right_hand = 0
+        self.distance_left_hand = 0 
 
     def _setup_shapes(self, collision_type):
         # Initialize the shapes used in the background for collision. 

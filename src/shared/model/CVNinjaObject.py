@@ -3,7 +3,7 @@ from shared.utils import Generics, CVAssets
 import pymunk
 import numpy as np
 import time
-from playsound import playsound
+from preferredsoundplayer import playsound
 
 
 '''
