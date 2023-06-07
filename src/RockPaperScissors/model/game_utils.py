@@ -13,7 +13,7 @@ from shared.utils import CVAssets, Generics
 #------------------------------------------------------------------------ Used in AI
 
 
-
+# This function takes an integer n as input and returns n+1 if n is not equal to 3, otherwise, it returns 1.
 def beats(n):
     if int(n) == 3:
         return int(1)
@@ -21,11 +21,13 @@ def beats(n):
         return int(n)+1
 
 
+#This function overlays the imgFront image on top of the imgBack image at the specified position pos.
+# It handles transparency by using an alpha channel in the imgFront image.
+# The resulting image is returned.
 def overlayPNG(imgBack, imgFront, pos=[0, 0]):
     hf, wf, cf = imgFront.shape
     hb, wb, cb = imgBack.shape
     if (pos[0] > wb or pos[1] > hb):  # prevent out of bounds overlays
-        # print("Image not in view")
         return imgBack
     *_, mask = cv2.split(imgFront)
     maskBGRA = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGRA)
@@ -47,6 +49,9 @@ def overlayPNG(imgBack, imgFront, pos=[0, 0]):
     return imgBack
 
 
+#This function retrieves training data from a CSV file (CVAssets.CSV_ROCK_PAPER_SCISSORS) for a specific player (player_name).
+# It reads the CSV file, skips the header row, and collects the player's moves from the CSV file.
+# It returns the last 7 moves of the player as a list.
 def get_training_data(player_name):
     with open(CVAssets.CSV_ROCK_PAPER_SCISSORS, 'a+') as _:
         pass
@@ -68,6 +73,10 @@ def get_training_data(player_name):
             return []
 
 
+#This function retrieves the training data for a player using get_training_data(player_name).
+# If the length of the training data is 7, it preprocesses the data, creates a model (MLPClassifier), and fits the model to the data.
+# It returns the trained model and the scaler used for preprocessing.
+# If the length of the training data is not 7, it returns None for both the model and scaler.
 def get_model(player_name):
     last_moves = get_training_data(player_name)
     if len(last_moves) == 7:  # Only train if we have 7 moves
@@ -82,6 +91,11 @@ def get_model(player_name):
         return None, None
 
 
+#This function obtains the model and scaler for player1 using get_model(player1).
+# If the model is available, it retrieves the last moves of player1 and predicts the next move using the model.
+# If the model is not available (insufficient data), it generates a random move.
+# It prints the received data and the predicted move.
+# It returns the randomly generated move and the predicted move as a tuple.
 def get_ai_move(player1):
     model, scaler = get_model(player1)
     if model is not None:
@@ -96,10 +110,13 @@ def get_ai_move(player1):
         randomNumber = random.randint(1, 3)
         print("Model is not being used because of insufficient data.")
         predicted_move = str(randomNumber)  # Use the random number as the predicted move
-    print("AI move =", randomNumber)
+    print("AI move = ", randomNumber)
     return randomNumber, predicted_move  # Return both the random number and predicted move as a tuple
 
 
+#This function determines the move made by player1 based on the positions of the fingers detected by the hand detector (detectorLeft).
+# It assigns a move code (1, 2, or 3) based on the finger configuration.
+# It returns the move code and the corresponding move name.
 def get_player_move(handLeft, detectorLeft, player1):
     playerLeftMove = None
     playerLeftMoveName = ""
@@ -107,16 +124,21 @@ def get_player_move(handLeft, detectorLeft, player1):
     if fingersLeft == [0, 0, 0, 0, 0]:
         playerLeftMoveName = "Rock"
         playerLeftMove = 1
-    if fingersLeft == [1, 1, 1, 1, 1]:
+    elif fingersLeft == [1, 1, 1, 1, 1]:
         playerLeftMoveName = "Paper"
         playerLeftMove = 2
-    if fingersLeft == [0, 1, 1, 0, 0]:
+    elif fingersLeft == [0, 1, 1, 0, 0]:
         playerLeftMoveName = "Scissors"
         playerLeftMove = 3
-    print(f"{player1} move = ", playerLeftMoveName)
+    else:
+        playerLeftMoveName = "Wrong selection!"
+    print(f"Player '{player1}' move = ", playerLeftMoveName)
     return playerLeftMove, playerLeftMoveName
 
 
+#This function calculates the result of the game between the player (playerLeftMove) and the AI (randomNumber).
+# It updates the scores and win streaks based on the result.
+# It returns the result, updated scores, and win streaks.
 def calculate_result_against_AI(playerLeftMove, randomNumber, scores, winStreak):
     # Player1 Wins
     if (playerLeftMove == 1 and randomNumber == 3) or \
@@ -140,7 +162,10 @@ def calculate_result_against_AI(playerLeftMove, randomNumber, scores, winStreak)
 
     return result, scores, winStreak
 
-
+#This function draws the UI for the game against the AI.
+# It overlays the AI move image on the left frame and combines it with the right frame.
+# It displays player names, scores, and a dividing line on the combined frame.
+# The resulting frame is returned.
 def draw_ui_against_AI(player1, player2, scores, randomNumber, left_frame, right_frame, half_width, height):
     imgAI = cv2.imread(f'RockPaperScissors/assets/{randomNumber}.png', cv2.IMREAD_UNCHANGED)
     imgAI = cv2.flip(imgAI,1)
@@ -168,20 +193,24 @@ def draw_ui_against_AI(player1, player2, scores, randomNumber, left_frame, right
 
     return combined_frame
 
+#This function saves game data (player name, move, win streak, prediction, and AI move) to a CSV file (CVAssets.CSV_ROCK_PAPER_SCISSORS).
+# If the file doesn't exist, it creates a new file with a header row.
+# If the player's training data exceeds 7 moves, it updates the model for that player.
 def save_to_csv(player_name, player_move, player_win_streak, prediction, AIMove):
-    file_exists = os.path.isfile(CVAssets.CSV_ROCK_PAPER_SCISSORS)
-    with open(CVAssets.CSV_ROCK_PAPER_SCISSORS, mode='a', newline='') as file:
-        fieldnames = ['playerName', 'playerMove', 'playerWinStreak', 'prediction', 'AIMove']
-        writer = csv.DictWriter(file, fieldnames=fieldnames)
-        if not file_exists:
-            writer.writeheader()  # Write header row only if the file doesn't exist
-        writer.writerow({'playerName': player_name,
-                         'playerMove': player_move,
-                         'playerWinStreak': player_win_streak,
-                         'prediction': prediction,
-                         'AIMove': AIMove})
-    if len(get_training_data(player_name)) > 7:
-        get_model(player_name)
+    if player_move in [1, 2, 3]:
+        file_exists = os.path.isfile(CVAssets.CSV_ROCK_PAPER_SCISSORS)
+        with open(CVAssets.CSV_ROCK_PAPER_SCISSORS, mode='a', newline='') as file:
+            fieldnames = ['playerName', 'playerMove', 'playerWinStreak', 'prediction', 'AIMove']
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            if not file_exists:
+                writer.writeheader()  # Write header row only if the file doesn't exist
+            writer.writerow({'playerName': player_name,
+                             'playerMove': player_move,
+                             'playerWinStreak': player_win_streak,
+                             'prediction': prediction,
+                             'AIMove': AIMove})
+        if len(get_training_data(player_name)) > 7:
+            get_model(player_name)
 
 
 
@@ -189,6 +218,9 @@ def save_to_csv(player_name, player_move, player_win_streak, prediction, AIMove)
 
 
 
+#This function determines the moves made by both players based on the positions of their fingers detected by the respective hand detectors.
+# It assigns move codes (1, 2, or 3) based on the finger configurations of both players.
+# It returns the move codes and corresponding move names for both players.
 def get_players_move(handLeft, detectorLeft, player1, handRight, detectorRight, player2):
     # Player left is actually player right but inverted
     playerLeftMove = None
@@ -203,7 +235,7 @@ def get_players_move(handLeft, detectorLeft, player1, handRight, detectorRight, 
     if fingersLeft == [0, 1, 1, 0, 0]:
         playerLeftMoveName = "Scissors"
         playerLeftMove = 3
-    print(f"{player1} move = ", playerLeftMoveName)
+    print(f"Player '{player1}' move = ", playerLeftMoveName)
 
     # Player right is actually player left but inverted
     fingersRight = detectorRight.fingersUp(handRight[0])
@@ -218,9 +250,12 @@ def get_players_move(handLeft, detectorLeft, player1, handRight, detectorRight, 
     if fingersRight == [0, 1, 1, 0, 0]:
         playerRightMoveName = "Scissors"
         playerRightMove = 3
-    print(f"{player2} move = ", playerRightMoveName)
+    print(f"Player '{player2}' move = ", playerRightMoveName)
     return playerLeftMove, playerLeftMoveName, playerRightMove, playerRightMoveName
 
+#This function draws the UI for the game between two players.
+# It combines the left and right frames, displays the scores, and adds a dividing line.
+# The resulting combined frame is returned.
 def draw_ui_against_players(scores, left_frame, right_frame, half_width, height):
     # Concatenate the left and right frames horizontally
     combined_frame = cv2.hconcat([left_frame, right_frame])
@@ -236,20 +271,23 @@ def draw_ui_against_players(scores, left_frame, right_frame, half_width, height)
 
     return combined_frame
 
+#This function calculates the result of the game between two players (player1 and player2) based on their moves (playerLeftMove and playerRightMove).
+# It updates the scores based on the result.
+# It returns the updated scores.
 def calculate_results_against_players(playerLeftMove, playerRightMove, scores, player2, player1):
     # Player Right Wins
     if (playerLeftMove == 1 and playerRightMove == 3) or \
             (playerLeftMove == 2 and playerRightMove == 1) or \
             (playerLeftMove == 3 and playerRightMove == 2):
         scores[1] += 1
-        print(f"{player2} Wins, Score = ", scores[1])
+        print(f"Player '{player2}' Wins, Score = ", scores[1])
 
     # Player Left Wins
     elif (playerLeftMove == 3 and playerRightMove == 1) or \
             (playerLeftMove == 1 and playerRightMove == 2) or \
             (playerLeftMove == 2 and playerRightMove == 3):
         scores[0] += 1
-        print(f"{player1} Wins, Score = ", scores[0])
+        print(f"Player '{player1}' Wins, Score = ", scores[0])
     else:
         print("Bust, try again..")
 
