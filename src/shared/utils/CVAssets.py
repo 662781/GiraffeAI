@@ -15,6 +15,7 @@ class CVAssets():
     IMAGE_MENU_CVNINJA_SINGLEPLAYER = "menus/assets/CVNinja-Option-Singleplayer.png"
     IMAGE_MENU_CVNINJA_MULTIPLAYER = "menus/assets/CVNinja-Option-Multiplayer.png"
     IMAGE_MENU_CVNINJA_ARROW = "menus/assets/CVNinja-Arrow.png"
+    AUDIO_FRUIT_NINJA_THEME = "menus/assets/Fruit-Ninja-Theme.mp3"
     
     ## Warming up
     IMAGE_MENU_WARMING_UP = "menus/assets/Menu-Item-Warming-up.png"

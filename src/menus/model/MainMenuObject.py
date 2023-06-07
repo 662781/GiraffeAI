@@ -1,7 +1,7 @@
 from shared.utils import Generics, CVAssets
 import pymunk
 from shared.model import CVNinjaObject
-from playsound import playsound
+from preferredsoundplayer import playsound
 
 class MainMenuObject(CVNinjaObject):
 
