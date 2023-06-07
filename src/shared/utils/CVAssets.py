@@ -12,7 +12,9 @@ class CVAssets():
     ## CVNinja
     IMAGE_MENU_CVNINJA = "menus/assets/Menu-Item-CVNinja.png"
     IMAGE_MENU_CVNINJA_START = "menus/assets/CVNinja-Start.png"
-    
+    IMAGE_MENU_CVNINJA_SINGLEPLAYER = "menus/assets/CVNinja-Option-Singleplayer.png"
+    IMAGE_MENU_CVNINJA_MULTIPLAYER = "menus/assets/CVNinja-Option-Multiplayer.png"
+    IMAGE_MENU_CVNINJA_ARROW = "menus/assets/CVNinja-Arrow.png"
     
     ## Warming up
     IMAGE_MENU_WARMING_UP = "menus/assets/Menu-Item-Warming-up.png"
@@ -49,6 +51,6 @@ class CVAssets():
 
 
     # Shared assets
-    YOLO_MODEL_L = "shared/assets/yolov8l-pose.pt"
+    YOLO_MODEL_L = "shared/assets/yolov8m-pose.pt"
     IMAGE_DOJO = "shared/assets/dojo.png"
     IMAGE_LOADING = "shared/assets/loading.png"
