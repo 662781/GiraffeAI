@@ -27,9 +27,11 @@ git clone https://github.com/662781/GiraffeAI
 
 Before running the games in this collection, ensure that you have the following:
 
-- A working camera: All the games in this collection require a functioning camera to capture your movements or gestures.
-
-- Windows PC with sufficient RAM and CPU: If you are running the executable versions of the games, make sure you have a Windows PC with adequate RAM and CPU power to ensure smooth gameplay.
+- A camera capable of 60 Frames per second and a fielf of view of at least 100 degrees.
+- 4GB of free RAM
+- Nvidia gtx 1050m or higher
+- [Cuda 11.7](https://developer.nvidia.com/cuda-11-7-0-download-archive)
+- [Pytorch for Cuda 11.7](https://pytorch.org/get-started/locally/)
 
 ### Game-Specific Requirements
 
@@ -40,7 +42,7 @@ Before running the games in this collection, ensure that you have the following:
    - Hand positioning: Place your hands in front of the camera and make sure they are not too far away. This will help the hand tracking algorithm accurately recognize your gestures.
 
 3. AI Fruit Ninja with YOLO:
-   - Camera placement: Position the camera directly in front of you, facing the game area. Avoid placing the camera too far away to ensure effective fruit detection and slicing.
+   - Camera placement: Position the camera directly in front of you, facing the game area. Wide field of view is especially important for multiplayer.  
 
 4. Warmup Game with Push-Up Counter:
    - No specific requirements.
