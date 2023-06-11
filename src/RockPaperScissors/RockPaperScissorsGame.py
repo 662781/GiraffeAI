@@ -71,7 +71,7 @@ class RockPaperScissorsGame(CVGame):
             if self.stateResult is False:
                 self.timer = time.time() - self.initialTime
 
-                if self.timer > 1:
+                if self.timer > 2:
                     self.stateResult = True
                     self.timer = 0
 
