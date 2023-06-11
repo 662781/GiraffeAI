@@ -30,8 +30,8 @@ Before running the games in this collection, ensure that you have the following:
 - A camera capable of 60 Frames per second and a fielf of view of at least 100 degrees.
 - 4GB of free RAM
 - Nvidia gtx 1050m or higher
-- [Cuda 11.7](https://developer.nvidia.com/cuda-11-7-0-download-archive)
-- [Pytorch for Cuda 11.7](https://pytorch.org/get-started/locally/)
+- [CUDA Toolkit 11.7](https://developer.nvidia.com/cuda-11-7-0-download-archive)
+- [PyTorch for CUDA 11.7](https://pytorch.org/get-started/locally/)
 
 ### Game-Specific Requirements
 
