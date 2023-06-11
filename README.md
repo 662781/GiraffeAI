@@ -10,7 +10,7 @@ This project is a collection of four AI-related mini-games implemented in Python
 
 2. AI Fruit Ninja with YOLO: In this game, the YOLO (You Only Look Once) object detection algorithm is employed to detect the player on the screen. Objects are then thrown at the player, and the player must use their hands or feet to slice the objects in half. This game is inspired by the popular mobile game Fruit Ninja.
 
-3. Rock Paper Scissors Game with Hand Tracking: This game utilizes hand tracking to recognize and classify hand gestures as rock, paper, or scissors. You can play against the computer or against a friend.
+3. Rock Paper Scissors Game with Hand Tracking: This game utilizes hand tracking to recognize and classify hand gestures as rock, paper, or scissors. You can play against a friend or against an Artificial Intelligence which is retrained after every round taking into account the last 7 moves of the certain player by name. After retraining, the model tries to predict the next move of the user which is then used by the artificial intelligence to try defeating its opponent (the player).
 
 4. Warmup Game with Push-Up Counter: The warmup game is designed to get your body moving. It includes a push-up counter that uses computer vision techniques to count your push-ups accurately. It's a great way to incorporate physical exercise into your coding routine if you spend a lot of time sitting at a desk.
 
