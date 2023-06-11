@@ -29,7 +29,7 @@ Before running the games in this collection, ensure that you have the following:
 
 - A camera capable of 60 Frames per second and a fielf of view of at least 100 degrees.
 - 4GB of free RAM
-- Nvidia gtx 1050m or higher
+- Nvidia GTX1050m or higher
 - [CUDA Toolkit 11.7](https://developer.nvidia.com/cuda-11-7-0-download-archive)
 - [PyTorch for CUDA 11.7](https://pytorch.org/get-started/locally/)
 
@@ -44,8 +44,8 @@ Before running the games in this collection, ensure that you have the following:
 3. AI Fruit Ninja with YOLO:
    - Camera placement: Position the camera directly in front of you, facing the game area. Wide field of view is especially important for multiplayer.  
 
-4. Warmup Game with Push-Up Counter:
-   - No specific requirements.
+4. Warming Up Game:
+   - Position the camera so that all players are in view and no other people can disturb the detection of the AI model.
 
 Note: These requirements are general guidelines to achieve the best experience while playing the games. Adjustments may be needed based on your specific setup and environment.
 
