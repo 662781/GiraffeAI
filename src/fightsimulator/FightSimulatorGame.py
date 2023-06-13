@@ -4,6 +4,7 @@ import mediapipe as mp
 import numpy as np
 import math
 import random
+import threading
 
 from shared.model import CVGame
 from shared.utils import Generics, CVAssets
@@ -102,15 +103,16 @@ class FightSimulatorGame(CVGame):
             angle = self.calculate_angle(first_point=left_shoulder_xy, mid_point=left_elbow_xy,
                                          end_point=left_wrist_xy)
 
-            self.detect_punch(player=self.players[0], angle=angle, left_wrist_visibility=left_wrist_visibility,
-                              left_elbow_visibility=left_elbow_visibility)
+            self.start_punch_detection_thread(player=self.players[0], angle=angle,
+                                              left_wrist_visibility=left_wrist_visibility,
+                                              left_elbow_visibility=left_elbow_visibility)
 
             self.elapsed_time = time.time() - self.start_time
 
             self.check_for_game_stop()
 
             return self.draw_on_frame(image=image, angle=angle, left_elbow_xy=left_elbow_xy, results=landmarks,
-                                  player=self.players[0])
+                                      player=self.players[0])
         else:
             return frame
 
@@ -206,6 +208,11 @@ class FightSimulatorGame(CVGame):
 
         random_punch = random.choice(weighted_punches)
         self.selected_punch = random_punch
+
+    def start_punch_detection_thread(self, player, angle, left_wrist_visibility, left_elbow_visibility):
+        punch_detection_thread = threading.Thread(target=self.detect_punch,
+                                                  args=(player, angle, left_wrist_visibility, left_elbow_visibility))
+        punch_detection_thread.start()
 
     @staticmethod
     def get_moving_average(points, number_of_last_points):
@@ -332,12 +339,22 @@ class FightSimulatorGame(CVGame):
         dx, dy = self.get_direction(player=player, number_of_points_to_track=2)
 
         if time.time() - self.last_punch_time >= self.cooldown_duration:
-            if left_wrist_visibility > self.min_visiblity and left_elbow_visibility > self.min_visiblity:
-                self.detect_jab(angle, dx, dy, player)
-                self.detect_uppercut(angle, dy, player)
-                self.detect_hook(angle, dx, dy, player)
+            punch_threads = []
 
-                self.last_punch_time = time.time()
+            jab_thread = threading.Thread(target=self.detect_jab, args=(angle, dx, dy, player))
+            punch_threads.append(jab_thread)
+
+            uppercut_thread = threading.Thread(target=self.detect_uppercut, args=(angle, dy, player))
+            punch_threads.append(uppercut_thread)
+
+            hook_thread = threading.Thread(target=self.detect_hook, args=(angle, dx, dy, player))
+            punch_threads.append(hook_thread)
+
+            for thread in punch_threads:
+                thread.start()
+
+            for thread in punch_threads:
+                thread.join()
 
     def detect_uppercut(self, angle, dy, player):
         """
@@ -355,6 +372,7 @@ class FightSimulatorGame(CVGame):
                     player.points += 1
                     self.combined_points += 1
                 self.uppercut_timer = 0
+                self.last_punch_time = time.time()
             else:
                 self.uppercut_timer += time.time() - self.uppercut_timer
         else:
@@ -376,6 +394,7 @@ class FightSimulatorGame(CVGame):
                     player.points += 1
                     self.combined_points += 1
                 self.hook_timer = 0
+                self.last_punch_time = time.time()
             else:
                 self.hook_timer += time.time() - self.hook_timer
         else:
@@ -396,6 +415,7 @@ class FightSimulatorGame(CVGame):
             if self.selected_punch == "jab":
                 player.points += 1
                 self.combined_points += 1
+                self.last_punch_time = time.time()
 
     def draw_on_frame(self, image, angle, left_elbow_xy, results, player):
         """
