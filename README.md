@@ -20,9 +20,10 @@ This project is a collection of four computer vision related mini-games implemen
 
 Before running the games in this collection, ensure that you have the following:
 
-- A camera capable of 60 Frames per second and a fielf of view of at least 100 degrees.
+- A camera capable of 60 Frames per second and a field of view of at least 100 degrees.
 - 4GB of **free** RAM
-- Nvidia GTX1050m or higher
+- Windows 10 or 11 running on your machine (verified compatibilty ✔️)
+- Nvidia GTX1050m GPU or higher
 - [CUDA Toolkit 11.7](https://developer.nvidia.com/cuda-11-7-0-download-archive)
 - [PyTorch for CUDA 11.7](https://pytorch.org/get-started/locally/)
 
@@ -37,7 +38,7 @@ After cloning, navigate to the src directory using
 ```
 cd GiraffeAI/src
 ```
-Make sure to run the PyTorch install command from the provided link BEFORE you install the requirements.txt     
+**IMPORTANT:** Make sure to run the PyTorch install command from the provided link **BEFORE** you install the requirements.txt!     
 Install the requirements:
 ```
 pip install -r ./requirements.txt
@@ -62,6 +63,3 @@ python ./GameManager.py
    - Position the camera so that all players are in view and no other people can disturb the detection of the AI model.
 
 Note: These requirements are general guidelines to achieve the best experience while playing the games. Adjustments may be needed based on your specific setup and environment.
-
-
-
