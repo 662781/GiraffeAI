@@ -54,6 +54,7 @@ class FightSimulatorGame(CVGame):
         self.hook_timer = 0
         self.punch_types = ["jab", "uppercut", "hook"]
         self.selected_punch = "jab"
+        self.elapsed_time = 0
         self.video_capture = cv2.VideoCapture(0)
         self.combined_points = 0
         self.previous_combined_points = -1
@@ -69,7 +70,6 @@ class FightSimulatorGame(CVGame):
         """
         self.options = options
         self.time_since_last_selected_punch = time.time() - self.punch_select_time
-        self.elapsed_time = 0
         self.start_time = time.time()
         self.elapsed_time = time.time() - self.start_time
 
@@ -112,6 +112,8 @@ class FightSimulatorGame(CVGame):
             self.start_punch_detection_thread(player=self.players[0], angle=angle,
                                               left_wrist_visibility=left_wrist_visibility,
                                               left_elbow_visibility=left_elbow_visibility)
+
+            self.elapsed_time = time.time() - self.start_time
 
             self.check_for_game_stop()
 
@@ -420,6 +422,7 @@ class FightSimulatorGame(CVGame):
             player (FightSimulatorGame.Player): Player object.
         """
         if angle > 100 and (abs(dy) ** 2) < (abs(dx) ** 2):
+            print("jab")
             if self.selected_punch == "jab":
                 player.points += 1
                 self.combined_points += 1
