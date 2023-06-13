@@ -60,7 +60,7 @@ class GameManager:
         self.cap.set(4, camera_height)
 
         cv2.namedWindow("CVDojo", cv2.WINDOW_NORMAL)
-        # cv2.setWindowProperty("CVDojo", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+        cv2.setWindowProperty("CVDojo", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
     def switch_game(self, new_game):
         options = None

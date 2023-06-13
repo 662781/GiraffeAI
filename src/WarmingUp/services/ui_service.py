@@ -10,14 +10,14 @@ class UIService:
     def put_score(self, players: list, xy: tuple):
         if (players is not None):
             for i, player in enumerate(players):
-                cv2.putText(self.frame, "Score Player {}: {}".format(i+1, player.score), xy, cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                cv2.putText(self.frame, "Score Player {}: {}".format(i+1, int(round(player.score / 2, 0))), xy, cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
     def put_mode(self, mode: int, xy: tuple):
         if mode == 1:
             cv2.putText(self.frame, "Snapshot Mode", xy, cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
     def show_pause_menu(self, frame):
-        print("Game Paused: Too many of not enough players detected!")
+        print("Game Paused: Too many or not enough players detected!")
         return self.create_faded_frame(frame)
     
     def create_faded_frame(self, frame):

@@ -53,6 +53,6 @@ class CVAssets():
 
 
     # Shared assets
-    YOLO_MODEL_L = "shared/assets/yolov8n-pose.pt"
+    YOLO_MODEL_L = "shared/assets/yolov8s-pose.pt"
     IMAGE_DOJO = "shared/assets/dojo.png"
     IMAGE_LOADING = "shared/assets/loading.png"
