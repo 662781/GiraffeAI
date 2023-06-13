@@ -350,13 +350,13 @@ def draw_ui_against_AI(player1, player2, scores, randomNumber, left_frame, right
         if(winner == 1):
             timer = 0
             if timer < 3:
-                combined_frame = Generics.put_text_with_custom_font(combined_frame, "A.I. wins!",
+                combined_frame = Generics.put_text_with_custom_font(combined_frame, "Player wins!",
                                                                     (270, 10), CVAssets.FONT_FRUIT_NINJA, 20,
                                                                     (0, 255, 0), outline_color=(0, 0, 0))
         elif(winner == 2):
             timer = 0
             if timer < 3:
-                combined_frame = Generics.put_text_with_custom_font(combined_frame, "Player wins!",
+                combined_frame = Generics.put_text_with_custom_font(combined_frame, "A.I. wins!",
                                                                     (270, 10), CVAssets.FONT_FRUIT_NINJA, 20,
                                                                     (0, 255, 0), outline_color=(0, 0, 0))
         elif(winner == 0):
