@@ -109,8 +109,10 @@ class FightSimulatorGame(CVGame):
 
             self.check_for_game_stop()
 
-        return self.draw_on_frame(image=image, angle=angle, left_elbow_xy=left_elbow_xy, results=landmarks,
+            return self.draw_on_frame(image=image, angle=angle, left_elbow_xy=left_elbow_xy, results=landmarks,
                                   player=self.players[0])
+        else:
+            return frame
 
     def check_for_game_start(self):
         """
@@ -182,7 +184,7 @@ class FightSimulatorGame(CVGame):
         """
         Check if the user has selected a punch type and update the selected punch accordingly.
         """
-        if self.elapsed_time % 5 <= 0.13:
+        if self.elapsed_time % 5 <= 0.10:
             self.select_random_punch()
 
         if self.combined_points != self.previous_combined_points:
@@ -258,7 +260,7 @@ class FightSimulatorGame(CVGame):
             width (int): Width of the image.
             height (int): Height of the image.
         """
-        min_detection_accuracy = 0.8
+        min_detection_accuracy = 0.7
         left_index = landmarks[self.mp_pose.PoseLandmark.LEFT_INDEX.value]
         cx_left, cy_left = int(left_index.x * width), int(left_index.y * height)
         detection_accuracy = left_index.visibility
