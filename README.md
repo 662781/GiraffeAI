@@ -14,7 +14,7 @@ This project is a collection of four computer vision related mini-games implemen
 
 3. Rock Paper Scissors Game: This game utilizes hand tracking to recognize and classify hand gestures as rock, paper, or scissors. You can play against a person or against an AI which is retrained after every round taking into account the last 7 moves of the certain player by name. After retraining, the model tries to predict the next move of the user which is then used by the artificial intelligence to try defeating its opponent (the player).
 
-4. Warming Up Game: The warming up game is a game that can detect multiple players doing certain exercises. It includes a push-up counter that uses computer vision techniques to count push-ups semi-accurately. It has a rudimentary user interface.
+4. Warming Up Game: The warming up game is a game that can detect multiple players doing certain exercises, using the YOLOv8 pose model and a custom TensorFlow keypoint classifier. It includes a push-up counter that uses computer vision techniques to count push-ups semi-accurately. It has a rudimentary user interface.
 
 ## Prerequisites
 
@@ -39,7 +39,8 @@ After cloning, navigate to the src directory using
 cd GiraffeAI/src
 ```
 **IMPORTANT:** Make sure to run the PyTorch install command from the provided link **BEFORE** you install the requirements.txt!     
-Install the requirements:
+Install the requirements    
+We recommend to use a virtual environment (e.g. with Conda or plain python)
 ```
 pip install -r ./requirements.txt
 ```
