@@ -37,6 +37,7 @@ After cloning, navigate to the src directory using
 ```
 cd GiraffeAI/src
 ```
+Make sure to run the PyTorch install command from the provided link BEFORE you install the requirements.txt     
 Install the requirements:
 ```
 pip install -r ./requirements.txt
