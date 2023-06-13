@@ -30,10 +30,12 @@ class WarmingUpGame(CVGame):
         self.model_path: str = 'WarmingUp/assets/tflite/keypoint_classifier.tflite' 
 
         # Use CUDA, AKA the GPU, if available
-        #model.to('cuda')
+        # self.model.to('cuda')
+
+        print(torch.cuda.is_available())
 
         # The number of players chosen (should be chosen in the future game menu)
-        self.no_players_set: int = 2
+        self.no_players_set: int = 1
 
         # Create Player class instances with PlayerService
         self.pl_serv = PlayerService(self.no_players_set)
