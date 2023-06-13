@@ -70,6 +70,7 @@ class FightSimulatorGame(CVGame):
         self.options = options
         self.time_since_last_selected_punch = time.time() - self.punch_select_time
         self.elapsed_time = 0
+        self.start_time = time.time()
         self.elapsed_time = time.time() - self.start_time
 
     def update(self, frame):
