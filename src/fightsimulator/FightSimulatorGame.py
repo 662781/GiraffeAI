@@ -40,6 +40,8 @@ class FightSimulatorGame(CVGame):
 
     def __init__(self):
         super().__init__()
+        self.time_since_last_selected_punch = 0
+        self.punch_select_time = time.time()
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_pose = mp.solutions.pose
         self.pose_model = self.mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
@@ -67,6 +69,7 @@ class FightSimulatorGame(CVGame):
             options: game options.
         """
         self.options = options
+        self.time_since_last_selected_punch = time.time() - self.punch_select_time
 
     def update(self, frame):
         """
@@ -80,6 +83,7 @@ class FightSimulatorGame(CVGame):
         """
         global angle, left_elbow_xy
         self.create_players()
+        self.time_since_last_selected_punch = time.time()
 
         image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         landmarks = self.pose_model.process(image)
@@ -186,8 +190,10 @@ class FightSimulatorGame(CVGame):
         """
         Check if the user has selected a punch type and update the selected punch accordingly.
         """
-        if self.elapsed_time % 5 <= 0.10:
+        if self.get_time_difference() > 5:
+            self.punch_select_time = time.time()
             self.select_random_punch()
+            print("time difference", self.get_time_difference())
 
         if self.combined_points != self.previous_combined_points:
             self.select_random_punch()
@@ -213,6 +219,9 @@ class FightSimulatorGame(CVGame):
         punch_detection_thread = threading.Thread(target=self.detect_punch,
                                                   args=(player, angle, left_wrist_visibility, left_elbow_visibility))
         punch_detection_thread.start()
+
+    def get_time_difference(self):
+        return self.time_since_last_selected_punch - self.punch_select_time
 
     @staticmethod
     def get_moving_average(points, number_of_last_points):
