@@ -33,7 +33,7 @@ class WarmingUpGame(CVGame):
         #model.to('cuda')
 
         # The number of players chosen (should be chosen in the future game menu)
-        self.no_players_set: int = 1
+        self.no_players_set: int = 2
 
         # Create Player class instances with PlayerService
         self.pl_serv = PlayerService(self.no_players_set)
@@ -69,7 +69,7 @@ class WarmingUpGame(CVGame):
         frame = cv2.flip(frame, 1)
 
         # Show FPS in the CV Window
-        FPSCounterService.show_fps(frame, time.time(), FPSCounterService)
+        # FPSCounterService.show_fps(frame, time.time(), FPSCounterService)
 
         # Set writeable to false
         frame.flags.writeable = False
@@ -143,13 +143,13 @@ class WarmingUpGame(CVGame):
         ui = UIService(annotated_frame)
 
         # Load the game-UI in the CV window
-        ui.draw_buttons()
+        # ui.draw_buttons()
 
         # Put the score of each player on the CV window
-        ui.put_score(self.players_list, (200, 50))
+        ui.put_score(self.players_list, [10, 30], 30)
 
         # Put the predicted class of each player on the CV window
-        ui.show_prediction(self.pred_classes, (200, 200))
+        ui.show_prediction(self.pred_classes, [10, 100], 30)
 
         # Place an indicator of the mode on screen if it's 1 (Snapshot Mode) and if there is only 1 player
         if self.no_players_set == 1:
