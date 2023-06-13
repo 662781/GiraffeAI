@@ -33,7 +33,7 @@ class WarmingUpGame(CVGame):
         #model.to('cuda')
 
         # The number of players chosen (should be chosen in the future game menu)
-        self.no_players_set: int = 2
+        self.no_players_set: int = 1
 
         # Create Player class instances with PlayerService
         self.pl_serv = PlayerService(self.no_players_set)

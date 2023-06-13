@@ -56,7 +56,7 @@ class FightSimulatorGame(CVGame):
         self.combined_points = 0
         self.previous_combined_points = -1
         self.is_game_started = False
-        self.game_duration = 5
+        self.game_duration = 60
 
     def setup(self, options):
         """

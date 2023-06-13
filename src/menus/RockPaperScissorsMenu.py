@@ -112,8 +112,8 @@ class RockPaperScissorsMenu(CVGame):
         print("Hit with ", kinematic_shape.player_limb)
         for shape in arbiter.shapes:
             if(shape.body.body_type != pymunk.Body.KINEMATIC):
-                shape.parent_object.collision_aftermath(space, shape)
                 if(shape_trail_length > 10): 
+                    shape.parent_object.collision_aftermath(space, shape)
                     if(shape.collision_type == 1):
                         self.should_switch = True
                         self.next_game = "Rock Paper Scissors"

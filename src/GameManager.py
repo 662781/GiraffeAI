@@ -46,7 +46,7 @@ class GameManager:
 
         "Rock Paper Scissors": RockPaperScissorsGame(), "Rock Paper Scissors AI": RockPaperScissorsAIGame(), "Rock Paper Scissors Menu": RockPaperScissorsMenu(),
 
-        "Warming Up": WarmingUpGame(), "Warming Up Menu": WarmingUpMenu()
+        "Warming-up": WarmingUpGame(), "Warming Up Menu": WarmingUpMenu()
     }
 
     def __init__(self):
