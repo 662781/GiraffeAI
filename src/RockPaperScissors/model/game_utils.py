@@ -332,7 +332,6 @@ def draw_ui_against_AI(player1, player2, scores, randomNumber, left_frame, right
     # cv2.putText(combined_frame, "FPS:" + str(display_fps), (460, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2,cv2.LINE_AA)
 
     # Display player names on the frames
-    #image, text, position, font_path, font_size, font_color, outline_color = (255, 255, 255), outline_width=2)
     combined_frame = Generics.put_text_with_custom_font(combined_frame, player2, (10,50), CVAssets.FONT_FRUIT_NINJA, 20 ,(255, 255, 255), outline_color=(0,0,0))
     combined_frame = Generics.put_text_with_custom_font(combined_frame, player1, (half_width+10, 50),CVAssets.FONT_FRUIT_NINJA, 20 , (255, 255, 255), outline_color=(0,0,0))
     combined_frame = Generics.put_text_with_custom_font(combined_frame, "Points: " + str(scores[0]), (10,100), CVAssets.FONT_FRUIT_NINJA, 20 ,(255, 255, 255), outline_color=(0,0,0))
