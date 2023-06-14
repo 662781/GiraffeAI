@@ -27,10 +27,10 @@ class CVNinjaGame(CVGame):
                "menu_option_play_again": 7,
                "void": 99, 
           }
+          # Intialize the assets (images, sounds) required for the game
           self._initialize_assets()
 
-          # set left,right and middle spawn positions
-          # todo: multiplayer will need different spawn locations for each player
+          # set spawn positions for objects
           self.spawn_postitions_singleplayer=  [(-70, 50),(-70, 40),(-70, 30),# left corner
                                    (710, 50), (710, 40), (710, 30), # right corner
                                    (100,-50), (300,-50), (400,-50), (490,-50)] # middle top
@@ -41,7 +41,8 @@ class CVNinjaGame(CVGame):
                                              ]
 
      def setup(self, options):
-          time.sleep(3)
+          """Setup the game depending on the received options, state booleans are also defined for later use."""
+          time.sleep(3) # Some time is given for the players to prepare
           self.options = options
           self.NUMBER_OF_PLAYERS = self.options["NUMBER_OF_PLAYERS"]
           self.CAMERA_WIDTH = self.options["CAMERA_WIDTH"]
@@ -96,8 +97,10 @@ class CVNinjaGame(CVGame):
                thread.start()
 
      def _setup_space(self):
+          """Setting up the Pymunk Space, which simulates physics in the background"""
           self.space = pymunk.Space()
-          self.space.gravity = (0, 980)
+          self.space.gravity = (0, 980) # Earth's Gravity
+          
           # Real boundaries of the space are a bit bigger than 480p, for illusion of objects appearing in and vanishing from the screen. 
           left_segment = pymunk.Segment(self.space.static_body, (-200, 0), (-200, 800), 100)
           right_segment = pymunk.Segment(self.space.static_body, (840, 0), (840, 800), 100)
@@ -123,7 +126,7 @@ class CVNinjaGame(CVGame):
                self._create_event_handlers_for_player(player_index, player)
           
      def _create_event_handlers_for_player(self,player_index, player):
-          """Creates collision and out of bounds handlers for a specific player number"""
+          """Creates collision and out of bounds handlers for a specific player"""
           handlers_collision = [] 
           handlers_out_of_bounds = [self.space.add_collision_handler(self.collision_types["broken_objects"],self.collision_types["void"])]
           handlers_out_of_bounds[-1].separate = self.out_of_bounds
@@ -146,7 +149,7 @@ class CVNinjaGame(CVGame):
           handlers_collision[-1].begin = self._handle_menu
 
      def cleanup(self):
-          # todo: change into dynamic
+          """Stop the object spawners that run in seperate threads and remove all orphanded objects of each player"""
           self.stop_threads = True
           for player_index in range(len(self.cvninja_object_spawners)):
                for object_spawner in self.cvninja_object_spawners["Player-" + str(player_index+1)]:
@@ -155,7 +158,7 @@ class CVNinjaGame(CVGame):
           super().cleanup()
 
      def update(self, frame):
-          display_fps = self.cvFpsCalc.get()
+          """Using the frame given by the Game Manager, CVNinja draws the background, player stick figures, and pymunk objects."""
           image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
           image = cv2.flip(image, 1)
           image.flags.writeable = False  
@@ -170,9 +173,7 @@ class CVNinjaGame(CVGame):
           image = Generics.overlayPNG(image, self.background, pos=[0, 0])
           self._update_players(image, result)
           image = cv2.cvtColor(image, cv2.COLOR_RGBA2BGR)
-          # cv2.putText(image, "FPS:" + str(display_fps), (460, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA) 
-
-               #cv2.putText(image, "Time left:" + str(remaining_seconds), (400, 90), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA) 
+          
           for i, player in enumerate(self.players):
                image = self._draw_player_stats(image,player, x = 10 + (i * (self.CAMERA_WIDTH / 2)))
                x = self.region_width * (i+1) 
@@ -272,6 +273,7 @@ class CVNinjaGame(CVGame):
           return image
      
      def _draw_final_screen(self, image):
+          """Draws the final screen with options to return to main menu or play again, for multiplayer it also draws the winner"""
           self.position_play_again = (100,80) if self.NUMBER_OF_PLAYERS == 1 else (self.region_width-50 ,140)
           self.position_main_menu = (400,80) if self.NUMBER_OF_PLAYERS == 1 else (self.region_width-50 ,260)
           # Spawn menu options once
@@ -286,10 +288,6 @@ class CVNinjaGame(CVGame):
                     else:
                          sorted_players[0].status ="winner"
                          sorted_players[1].status ="loser"
-
-               # for shape in self.space.shapes:
-               #      if(shape.body.body_type != pymunk.Body.KINEMATIC):
-               #           self.space.remove(shape)
                self.space.gravity = (0,0)
                self.menu_options[0].spawn_object(self.space, self.collision_types["menu_option_play_again"], position = self.position_play_again)
                self.menu_options[1].spawn_object(self.space, self.collision_types["menu_option_main_menu"], position = self.position_main_menu )
@@ -316,7 +314,6 @@ class CVNinjaGame(CVGame):
           return image
 
      def _handle_spawns_singleplayer(self, player, object_spawners, spawn_postitions):
-          print("Creating a thread for:", player)
           time.sleep(5)
           while self.stop_threads == False:
                random_spawn = spawn_postitions[random.randint(0,len(spawn_postitions)-1)]
@@ -385,7 +382,7 @@ class CVNinjaGame(CVGame):
 
 
      def _cleanup_object_spawners(self):
-          # Cleanup an object spawner for a given player's list  of object_spawners
+          """Cleanup an object spawner for a given player's list  of object_spawners"""
           for _,object_spawners in self.cvninja_object_spawners.items():
                for object_spawner in object_spawners:
                     for shape in object_spawner.pymunk_objects_to_draw:
@@ -394,7 +391,7 @@ class CVNinjaGame(CVGame):
                          except:
                               pass
      def _handle_collision(self, arbiter, space, data):
-          """Handle collision occurences and aftermath"""
+          """Handle collision occurences and aftermath given that the trail was long enough"""
           # Get objects that were involved in collision
           kinematic_shape = arbiter.shapes[0]
           shape_trail_length = data["player"].get_trailing_length_by_limb(kinematic_shape.player_limb)
@@ -411,16 +408,15 @@ class CVNinjaGame(CVGame):
                     print(str(error))
                     return True
                if isinstance(shape.parent_object,CVNinjaBomb):
-                    # data["player"].score -= 300
                     data["player"].strikes +=1
                     return True
                # Double points if player used a leg
                gets_double_points = (kinematic_shape.player_limb == "left leg" or kinematic_shape.player_limb == "right leg")
                data["player"].score += shape.parent_object.calculate_score(shape, gets_double_points)
-          #else:
-               #print("Trail: ",shape_trail_length )
+
           return True
      def _handle_menu(self, arbiter, space, data):
+          """Handle the collision with the Menu objecten"""
           shape = next((obj for obj in arbiter.shapes if obj.body.body_type != pymunk.Body.KINEMATIC), None)
           kinematic_shape = arbiter.shapes[0]
           contact_point = kinematic_shape.get_vertices()[1]
@@ -439,6 +435,7 @@ class CVNinjaGame(CVGame):
           return True
 
      def out_of_bounds(self, arbiter, space, data):
+          """Objects, broken or otherwise, should be disposed off after they leave the screen from the bottom."""
           shape = arbiter.shapes[0]
           space.remove(shape, shape.body)
           try:
