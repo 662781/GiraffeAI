@@ -350,22 +350,23 @@ class FightSimulatorGame(CVGame):
         dx, dy = self.get_direction(player=player, number_of_points_to_track=2)
 
         if time.time() - self.last_punch_time >= self.cooldown_duration:
-            punch_threads = []
+            if left_wrist_visibility > self.min_visiblity and left_elbow_visibility > self.min_visiblity:
+                punch_threads = []
 
-            jab_thread = threading.Thread(target=self.detect_jab, args=(angle, dx, dy, player))
-            punch_threads.append(jab_thread)
+                jab_thread = threading.Thread(target=self.detect_jab, args=(angle, dx, dy, player))
+                punch_threads.append(jab_thread)
 
-            uppercut_thread = threading.Thread(target=self.detect_uppercut, args=(angle, dy, player))
-            punch_threads.append(uppercut_thread)
+                uppercut_thread = threading.Thread(target=self.detect_uppercut, args=(angle, dy, player))
+                punch_threads.append(uppercut_thread)
 
-            hook_thread = threading.Thread(target=self.detect_hook, args=(angle, dx, dy, player))
-            punch_threads.append(hook_thread)
+                hook_thread = threading.Thread(target=self.detect_hook, args=(angle, dx, dy, player))
+                punch_threads.append(hook_thread)
 
-            for thread in punch_threads:
-                thread.start()
+                for thread in punch_threads:
+                    thread.start()
 
-            for thread in punch_threads:
-                thread.join()
+                for thread in punch_threads:
+                    thread.join()
 
     def detect_uppercut(self, angle, dy, player):
         """
@@ -466,7 +467,7 @@ class FightSimulatorGame(CVGame):
                                        self.mp_drawing.DrawingSpec(color=(245, 117, 66), thickness=2, circle_radius=2),
                                        self.mp_drawing.DrawingSpec(color=(245, 66, 230), thickness=2,
                                                                    circle_radius=2), )
-        self.draw_snake_line(image=image, player=player, color=(0, 255, 0))
+        # self.draw_snake_line(image=image, player=player, color=(0, 255, 0))
 
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         return image
