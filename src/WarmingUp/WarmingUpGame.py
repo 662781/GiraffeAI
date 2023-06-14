@@ -29,9 +29,6 @@ class WarmingUpGame(CVGame):
         # Set the path for the custom keypoint classifier model
         self.model_path: str = 'WarmingUp/assets/tflite/keypoint_classifier.tflite' 
 
-        # Use CUDA, AKA the GPU, if available
-        # self.model.to('cuda')
-
         print(torch.cuda.is_available())
 
         # The number of players chosen (should be chosen in the future game menu)
@@ -45,7 +42,6 @@ class WarmingUpGame(CVGame):
         self.pred_classes: list[int] = []
 
         # Check which exercise is chosen (Push-Up, Sit-Up, Jumping Jack, Squat)
-        # self.exercise: str = "PushUp"
         self.exercise: str = GameMenu.get_exercise()
 
         # Time in seconds to compete for points in the chosen exercise game
@@ -86,8 +82,8 @@ class WarmingUpGame(CVGame):
 
         # Draw the keypoints (only for testing) and add class name to visualize the current detected pose of all players in the CV window
         # Draws the bounding box & keypoints from the YOLOv8 model
+        # Use annotated_frame = frame to not show the bounding boxes and keypoints
         annotated_frame = results.plot()
-        # annotated_frame = frame
         
         # Get the keypoints in a easier iterable list
         # Shape when 1 person is detected: [[x, y, conf], ..]
@@ -143,9 +139,6 @@ class WarmingUpGame(CVGame):
 
         # Load a new instance of the UIService class
         ui = UIService(annotated_frame)
-
-        # Load the game-UI in the CV window
-        # ui.draw_buttons()
 
         # Put the score of each player on the CV window
         ui.put_score(self.players_list, [10, 30], 30)

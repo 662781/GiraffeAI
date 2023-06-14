@@ -18,11 +18,6 @@ class Player:
             # the poses list contains the predicted classes PushUp_Up, PushUp_Down and PushUp_Up 
             # (in that exact sequence), clear the list and return true
             if self.pushup_seq.issubset(self.poses_hist):
-            # if len(self.poses_hist) > 3 and self.poses_hist == [0, 1, 0]:
                 self.poses_hist.clear()
                 return True
-            # If the list has 3 items in the incorrect order, clear the list and return false
-            # elif len(self.poses_hist) > 3 and self.poses_hist != [0, 1, 0]:
-            #     self.poses_hist.clear()
-            #     return False
         return False
