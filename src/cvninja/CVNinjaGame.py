@@ -170,7 +170,7 @@ class CVNinjaGame(CVGame):
           image = Generics.overlayPNG(image, self.background, pos=[0, 0])
           self._update_players(image, result)
           image = cv2.cvtColor(image, cv2.COLOR_RGBA2BGR)
-          cv2.putText(image, "FPS:" + str(display_fps), (460, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA) 
+          # cv2.putText(image, "FPS:" + str(display_fps), (460, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA) 
 
                #cv2.putText(image, "Time left:" + str(remaining_seconds), (400, 90), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA) 
           for i, player in enumerate(self.players):
