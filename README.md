@@ -1,6 +1,7 @@
 # Computer Vision Dojo by Team Giraffe
 
 Python Mini-Games Collection based on computer vision.
+Build in Python 3.10.10
 
 ## Description
 
